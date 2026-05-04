@@ -26,3 +26,11 @@ bool can_partition_with_limit(const vector<long long>& a, int k, long long limit
     }
     return parts <= k;
 }
+
+long long minimize_max_segment_sum(const vector<long long>& a, int k) {
+    long long lo = *max_element(a.begin(), a.end());
+    long long hi = accumulate(a.begin(), a.end(), 0LL);
+    return first_true(lo, hi, [&](long long limit) {
+        return can_partition_with_limit(a, k, limit);
+    });
+}

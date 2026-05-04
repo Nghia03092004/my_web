@@ -1,0 +1,100 @@
+\section*{Overview}
+
+Monotonic stacks and monotonic queues are the ``throw away dominated candidates immediately'' tools. They show up in
+array problems where the answer depends on the nearest larger/smaller element or on the minimum/maximum inside a window.
+
+\section*{When to Use It}
+
+Use them when:
+
+\begin{itemize}
+  \item candidates arrive in a fixed order,
+  \item once one candidate dominates another, the dominated one will never be useful again,
+  \item the query asks for a nearest blocker or for the best element in a moving window.
+\end{itemize}
+
+\section*{Core Idea}
+
+Keep indices in a stack or deque whose corresponding values stay monotone.
+
+\begin{itemize}
+  \item For nearest greater/smaller problems, the structure is usually a stack.
+  \item For sliding windows, it is usually a deque because indices leave from the front and dominated indices leave from
+  the back.
+\end{itemize}
+
+\section*{Key Insight}
+
+Each index enters once and leaves once. The linear-time guarantee is not accidental; it comes from the dominance rule.
+If an index is popped, it is gone forever.
+
+\section*{Worked Problem}
+
+\paragraph{Problem 1.}
+For every position \(i\), find the next position to the right whose value is strictly smaller.
+
+\paragraph{Problem 2.}
+For every window of length \(k\), report its minimum.
+
+\paragraph{Why monotonic structures fit.}
+In both problems, worse candidates can be discarded permanently:
+
+\begin{itemize}
+  \item a larger element cannot be the next smaller element for anyone once a smaller element appears before it,
+  \item an older larger element can never be the minimum of a future window if a newer smaller element is already inside.
+\end{itemize}
+
+\section*{Correctness Intuition}
+
+The invariant is the whole proof:
+
+\begin{itemize}
+  \item stack values stay monotone, so the first surviving candidate in the needed direction is the nearest valid one,
+  \item deque values stay monotone and indices stay increasing, so the front is always the best valid candidate inside
+  the current window.
+\end{itemize}
+
+\section*{Complexity Analysis}
+
+Both the stack and deque versions run in \(O(n)\) time and \(O(n)\) memory.
+
+\section*{Implementation}
+
+The code includes:
+
+\begin{itemize}
+  \item next strictly smaller element to the right,
+  \item sliding-window minimum.
+\end{itemize}
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Choosing the wrong inequality and breaking ties incorrectly.
+  \item Storing values instead of indices, then losing window-expiration information.
+  \item Forgetting that some problems need strictly monotone order and others need non-strict order.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Largest rectangle in histogram.
+  \item Monotone queue optimization in DP.
+  \item Cartesian tree construction from the same stack discipline.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Next greater / next smaller element.
+  \item Sliding-window minimum or maximum.
+  \item Histogram and subarray-boundary problems driven by nearest blockers.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://usaco.guide/gold/stacks?lang=cpp}{USACO Guide: Monotonic Stacks}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+  \item \href{https://usaco.guide/CPH.pdf}{Competitive Programmer's Handbook}.
+\end{itemize}

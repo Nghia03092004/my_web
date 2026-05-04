@@ -1,0 +1,7 @@
+{
+  "title": "Polynomial Interpolation",
+  "summary": "Recover or evaluate a low-degree polynomial from sample points, usually with modular Lagrange interpolation.",
+  "level": "advanced",
+  "tags": ["polynomials", "lagrange", "mod"],
+  "order": 95
+}

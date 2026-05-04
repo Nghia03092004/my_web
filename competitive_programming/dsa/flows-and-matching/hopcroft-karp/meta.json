@@ -1,0 +1,7 @@
+{
+  "title": "Hopcroft-Karp",
+  "summary": "Find a maximum bipartite matching faster than repeated DFS by growing many shortest augmenting paths in one phase.",
+  "level": "advanced",
+  "tags": ["matching", "bipartite graph", "augmenting paths"],
+  "order": 25
+}

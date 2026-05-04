@@ -1,0 +1,7 @@
+{
+  "title": "Mobius Function",
+  "summary": "Use the Mobius function and inversion to separate exact divisibility structure from overcounted multiples.",
+  "level": "advanced",
+  "tags": ["mobius", "inversion", "sieve"],
+  "order": 70
+}

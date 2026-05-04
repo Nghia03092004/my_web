@@ -1,0 +1,7 @@
+{
+  "title": "Cartesian Tree",
+  "summary": "Build a tree whose inorder traversal is the array order and whose heap property exposes range minima or maxima.",
+  "level": "advanced",
+  "tags": ["tree construction", "rmq", "monotonic stack"],
+  "order": 125
+}

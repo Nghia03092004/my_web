@@ -1,0 +1,97 @@
+\section*{Overview}
+
+Greedy solutions are common in competitive programming, but the hard part is often not spotting the greedy rule. It is
+proving that the local choice does not paint the solution into a corner. The exchange argument is the proof shape I use
+most often for that.
+
+\section*{When to Use It}
+
+Reach for an exchange argument when:
+
+\begin{itemize}
+  \item the algorithm repeatedly chooses the ``best'' next item under some ordering,
+  \item feasible solutions can be compared by replacing one chosen item with another,
+  \item you suspect an optimal solution can be transformed to agree with the greedy choice step by step.
+\end{itemize}
+
+\section*{Core Idea}
+
+Take an arbitrary optimal solution. If it does not use the greedy first choice, modify it so that it does, without
+making the solution worse. Once the first choice is forced, recurse on the remaining subproblem.
+
+\section*{Key Insight}
+
+The exchange does not have to preserve the \emph{exact} same structure. It only has to preserve feasibility and total
+quality. This is why greedy proofs often feel easier after the right invariant is named: earliest finish time,
+smallest weight, most urgent deadline, and so on.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Given intervals \([l_i, r_i)\), choose as many pairwise non-overlapping intervals as possible.
+
+\paragraph{Greedy rule.}
+Sort by increasing right endpoint and always take the first interval that starts after the previously chosen one ends.
+
+\paragraph{Why the rule is safe.}
+Let \(g\) be the interval with the smallest ending time. Consider any optimal solution and let \(o\) be its first chosen
+interval. Since \(r_g \le r_o\), replacing \(o\) with \(g\) cannot block any later interval that used to fit after
+\(o\). So there exists an optimal solution that starts with \(g\).
+
+\section*{Problem Pattern}
+
+This proof shape also appears in:
+
+\begin{itemize}
+  \item interval scheduling,
+  \item Huffman-style merging arguments,
+  \item choosing edges in MST proofs,
+  \item deadline scheduling and certain matroid-style problems.
+\end{itemize}
+
+\section*{Correctness Intuition}
+
+The exchange argument is constructive: it tells you how to repair any optimal solution that disagrees with the greedy
+choice. After enough repairs, you get an optimal solution that matches the greedy algorithm entirely.
+
+\section*{Complexity Analysis}
+
+The proof technique itself has no complexity. In the interval-scheduling example, sorting dominates and the algorithm
+runs in \(O(n \log n)\).
+
+\section*{Implementation}
+
+The code below is the canonical interval-scheduling example. The algorithm is short, but the note matters because the
+proof pattern transfers to many other greedy routines.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Confusing a convincing example with an actual exchange proof.
+  \item Replacing one object with another without checking that all future feasibility constraints remain valid.
+  \item Using an exchange argument when the problem lacks enough structure; sometimes DP is the real answer.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Stay-ahead proofs, where the greedy partial solution is never behind any optimal partial solution.
+  \item Cut and cycle properties for graph greedy algorithms.
+  \item Matroid arguments, which formalize when greedy works globally.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Select the maximum number of non-overlapping intervals.
+  \item Prove the correctness of Kruskal's algorithm.
+  \item Scheduling tasks with a greedy order and a swap-based proof.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://usaco.guide/silver/greedy-sorting}{USACO Guide: Greedy Algorithms with Sorting}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+  \item \href{https://usaco.guide/CPH.pdf}{Competitive Programmer's Handbook}.
+\end{itemize}

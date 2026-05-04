@@ -1,0 +1,7 @@
+{
+  "title": "Greedy Exchange Argument",
+  "summary": "A proof pattern for showing that one locally optimal choice can be forced into some global optimum without making the solution worse.",
+  "level": "intermediate",
+  "tags": ["greedy", "proof", "exchange"],
+  "order": 45
+}

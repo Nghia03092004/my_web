@@ -1,0 +1,7 @@
+{
+  "title": "Wavelet Tree",
+  "summary": "Recursively partition values so k-th order statistics and frequency queries on subarrays can be answered quickly.",
+  "level": "advanced",
+  "tags": ["order statistics", "range queries", "value partition"],
+  "order": 135
+}

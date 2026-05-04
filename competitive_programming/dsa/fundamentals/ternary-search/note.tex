@@ -1,0 +1,118 @@
+\section*{Overview}
+
+Ternary search is the search pattern for one-dimensional optimization when the objective is \emph{unimodal}: it moves
+in one direction until the optimum, then moves in the other direction after the optimum. The contest version is usually
+``the function is convex / concave enough on one variable that I can compare two interior points and discard one side.''
+
+\section*{When to Use It}
+
+Use ternary search when:
+
+\begin{itemize}
+  \item the answer is the minimum or maximum of a function \(f(x)\),
+  \item the domain is one-dimensional,
+  \item \(f\) is unimodal on the searched interval,
+  \item evaluating \(f(x)\) is much cheaper than enumerating every candidate.
+\end{itemize}
+
+Typical contest signals are: ``choose one coordinate'', ``best time / angle / height'', and ``the cost is convex after
+the rest of the variables are fixed.''
+
+\section*{Core Idea}
+
+Pick two interior points \(m_1 < m_2\).
+
+\begin{itemize}
+  \item For minimization, if \(f(m_1) \le f(m_2)\), then the optimum cannot lie strictly to the right of \(m_2\).
+  \item If \(f(m_1) > f(m_2)\), then the optimum cannot lie strictly to the left of \(m_1\).
+\end{itemize}
+
+So every comparison removes a constant fraction of the current interval.
+
+\section*{Key Insight}
+
+The search works because unimodality is stronger than ``there is one best point.'' It says the function has only one
+direction change. Without that structural promise, comparing \(f(m_1)\) and \(f(m_2)\) does not tell you which side is
+safe to discard.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+There are \(n\) drones on a line. Drone \(i\) starts at position \(p_i\) and flies with speed \(s_i\). Choose a real
+meeting point \(x\) that minimizes the time until \emph{all} drones can reach it.
+
+\paragraph{Why ternary search fits.}
+The objective is
+\[
+f(x) = \max_i \frac{|x - p_i|}{s_i}.
+\]
+Each term is a V-shaped convex function. The maximum of convex functions is still convex, so \(f(x)\) is unimodal for
+minimization.
+
+\paragraph{Algorithm outline.}
+
+\begin{itemize}
+  \item Search on \([\min p_i, \max p_i]\).
+  \item Evaluate \(f(m_1)\) and \(f(m_2)\).
+  \item Keep the half that still contains the minimum.
+  \item Stop after enough iterations for the required precision.
+\end{itemize}
+
+\section*{Correctness Intuition}
+
+For a convex function, once the value at \(m_1\) is already no larger than the value at \(m_2\), the right side has
+started climbing or is not better than the left-middle region. So the minimizer cannot be hidden strictly beyond
+\(m_2\). The symmetric argument handles the other case.
+
+\section*{Complexity Analysis}
+
+If one evaluation of \(f(x)\) costs \(T\), then:
+
+\begin{itemize}
+  \item continuous ternary search costs \(O(T \cdot I)\), where \(I\) is the chosen number of iterations,
+  \item discrete ternary search costs \(O(T \log R)\) until the interval becomes small enough to brute-force.
+\end{itemize}
+
+\section*{Implementation}
+
+The code includes:
+
+\begin{itemize}
+  \item a floating-point ternary search template,
+  \item a sample evaluator for the drone meeting-time problem above.
+\end{itemize}
+
+For integer domains, I usually shrink with ternary search until only a handful of candidates remain, then test them all.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Using ternary search on a function that has multiple local optima.
+  \item Applying it to integers without a final brute-force cleanup.
+  \item Searching on a wider interval than the real feasible region and losing precision.
+  \item Forgetting that many ``convex-looking'' formulas become non-unimodal after hidden constraints are introduced.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Discrete ternary search on arrays or DP transition indices.
+  \item Binary search on the derivative sign when the derivative is monotone.
+  \item Parametric reformulations where the optimization can be turned into a monotone decision problem instead.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Choose one real coordinate minimizing the worst travel time.
+  \item Maximize a concave score depending on one continuous parameter.
+  \item Optimize one split point after all other combinatorial choices are fixed.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://cp-algorithms.com/num_methods/ternary_search.html}{cp-algorithms: Ternary Search}.
+  \item \href{https://usaco.guide/gold/ternary-search}{USACO Guide: Ternary Search}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+\end{itemize}

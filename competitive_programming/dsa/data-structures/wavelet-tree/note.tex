@@ -1,0 +1,101 @@
+\section*{Overview}
+
+Wavelet tree is a static range-query structure for arrays when the queries care about \emph{values inside a subarray}:
+how many numbers are \(\le x\), what is the \(k\)-th smallest, how many times does a value occur, and similar
+questions.
+
+\section*{When to Use It}
+
+Use it when:
+
+\begin{itemize}
+  \item the array is static or mostly static,
+  \item queries are on subarrays,
+  \item the answer depends on the multiset of values inside that subarray, not just on a sum or minimum.
+\end{itemize}
+
+\section*{Core Idea}
+
+The tree recursively splits the value range \([lo, hi]\) by its midpoint. At each node, it stores a prefix-count array
+telling how many elements of the current subsequence went to the left child.
+
+That one prefix array is enough to map a subarray \([l, r]\) in the parent node into the corresponding subarray inside
+either child.
+
+\section*{Key Insight}
+
+The structure does not partition by \emph{indices}; it partitions by \emph{value ranges} while preserving relative order
+inside each node. That is why it can answer order-statistics questions without sorting every queried subarray.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Given a static array, answer queries of the form:
+
+\begin{itemize}
+  \item \(k\)-th smallest value in \([l, r]\),
+  \item count of values \(\le x\) in \([l, r]\).
+\end{itemize}
+
+\paragraph{Why a wavelet tree fits.}
+At each level, the query only needs to know how many of the range elements went left. That tells you whether the answer
+stays in the left value half or the right value half.
+
+\section*{Correctness Intuition}
+
+Every node stores exactly the subsequence of values whose numeric range belongs to that node. The prefix counts map query
+indices from parent order into child order, so recursion always follows the correct subset of positions.
+
+\section*{Complexity Analysis}
+
+For value range size \(\sigma\):
+
+\begin{itemize}
+  \item build: \(O(n \log \sigma)\),
+  \item \(k\)-th smallest: \(O(\log \sigma)\),
+  \item count \(\le x\): \(O(\log \sigma)\),
+  \item memory: \(O(n \log \sigma)\).
+\end{itemize}
+
+\section*{Implementation}
+
+The reference code supports:
+
+\begin{itemize}
+  \item \texttt{kth(l, r, k)},
+  \item \texttt{lte(l, r, x)}.
+\end{itemize}
+
+The array is assumed to be 1-indexed for query arguments in the usual wavelet-tree style.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Mixing 0-indexed array storage with 1-indexed query formulas.
+  \item Forgetting that the structure is static; arbitrary updates are not cheap.
+  \item Building over a huge raw value domain instead of compressing when appropriate.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Frequency of one exact value.
+  \item Range sum over values in a numeric interval with extra prefix data.
+  \item Wavelet matrix, which stores the same idea in a flatter layout.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item K-th smallest on subarrays.
+  \item Count values below a threshold on subarrays.
+  \item Static range median or quantile queries.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://usaco.guide/adv/wavelet}{USACO Guide: Wavelet Tree}.
+  \item \href{https://github.com/kth-competitive-programming/kactl}{KACTL}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+\end{itemize}

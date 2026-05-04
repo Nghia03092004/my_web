@@ -21,6 +21,10 @@ const taxonomy = renderLatexContent(landingSources.taxonomyTex, {
 	headingSlugPrefix: 'dsa-taxonomy',
 });
 const implementedNotes = categories.flatMap((category) => category.notes);
+const levelOrder = ['basic', 'intermediate', 'advanced', 'expert'] as const;
+const levelCounts = Object.fromEntries(
+	levelOrder.map((level) => [level, implementedNotes.filter((note) => note.level === level).length]),
+) as Record<(typeof levelOrder)[number], number>;
 const noteByKey = new Map(implementedNotes.map((note) => [`${note.categorySlug}/${note.slug}`, note]));
 const pickNotes = (keys: string[]) =>
 	keys
@@ -61,6 +65,78 @@ const learningPath = [
 		title: 'Save for last',
 		description: 'Keep the amortized and pointer-heavy machinery for after the more standard contest baselines are stable.',
 		notes: 'Heavy-Light Decomposition, Convex Hull Trick, Splay Tree, Link-Cut Tree, Min-Cost Max-Flow',
+	},
+];
+const guidedTracks = [
+	{
+		title: 'Core first',
+		description: 'Use this if the goal is broad contest fluency before specializing. It stays close to the patterns that appear in array, graph, and prefix-processing problems.',
+		notes: pickNotes([
+			'fundamentals/binary-search',
+			'advanced-tricks/binary-search-on-answer',
+			'fundamentals/prefix-sums-and-difference-arrays',
+			'fundamentals/two-pointers-and-sliding-window',
+			'fundamentals/coordinate-compression',
+			'data-structures/fenwick-tree',
+			'graph-algorithms/bfs-and-dfs',
+		]),
+	},
+	{
+		title: 'Graph path',
+		description: 'Follow this route if tree structure, connectivity, and path queries are the current bottleneck.',
+		notes: pickNotes([
+			'graph-algorithms/bfs-and-dfs',
+			'graph-algorithms/topological-sort',
+			'graph-algorithms/dijkstra',
+			'graph-algorithms/minimum-spanning-tree',
+			'graph-algorithms/strongly-connected-components',
+			'graph-algorithms/euler-tour-technique',
+			'graph-algorithms/lowest-common-ancestor',
+			'graph-algorithms/centroid-decomposition',
+		]),
+	},
+	{
+		title: 'DP optimization path',
+		description: 'This path is for when the recurrence is already visible and the remaining problem is state reduction or transition acceleration.',
+		notes: pickNotes([
+			'dynamic-programming/knapsack',
+			'dynamic-programming/tree-dp',
+			'dynamic-programming/monotone-queue-optimization',
+			'dynamic-programming/divide-and-conquer-dp-optimization',
+			'dynamic-programming/knuth-optimization',
+			'dynamic-programming/convex-hull-trick',
+			'dynamic-programming/rerooting-dp',
+			'dynamic-programming/aliens-trick',
+		]),
+	},
+	{
+		title: 'Advanced data structures path',
+		description: 'Take this when the implementation burden is acceptable and the main task is choosing the right structural invariant.',
+		notes: pickNotes([
+			'data-structures/fenwick-tree',
+			'data-structures/segment-tree',
+			'data-structures/sparse-table',
+			'data-structures/ordered-set',
+			'data-structures/li-chao-tree',
+			'data-structures/persistent-segment-tree',
+			'data-structures/dsu-rollback',
+			'data-structures/wavelet-tree',
+		]),
+	},
+	{
+		title: 'Number theory path',
+		description: 'This route starts from the arithmetic tools that appear everywhere, then moves into structure-heavy topics such as CRT, multiplicative functions, and primality machinery.',
+		notes: pickNotes([
+			'number-theory/gcd-and-extended-euclid',
+			'number-theory/modular-arithmetic',
+			'number-theory/modular-inverse',
+			'number-theory/sieve-of-eratosthenes',
+			'number-theory/prime-factorization',
+			'number-theory/chinese-remainder-theorem',
+			'number-theory/mobius-function',
+			'number-theory/miller-rabin-and-pollard-rho',
+			'number-theory/primitive-roots-and-discrete-logarithm',
+		]),
 	},
 ];
 ---
@@ -138,14 +214,55 @@ const learningPath = [
 	<section class="section-panel">
 		<div class="section-heading">
 			<div>
+				<span class="section-label">Coverage</span>
+				<h2>What is already solid</h2>
+				<p>The section is intentionally uneven: the counts below show where the dense reusable notes already exist and where the next pass still has room to grow.</p>
+			</div>
+		</div>
+		<div class="archive-summary">
+			<div class="archive-summary__item">
+				<strong>{levelCounts.basic}</strong>
+				<span>basic notes</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{levelCounts.intermediate}</strong>
+				<span>intermediate notes</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{levelCounts.advanced}</strong>
+				<span>advanced notes</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{levelCounts.expert}</strong>
+				<span>expert notes</span>
+			</div>
+		</div>
+		<div class="chip-row">
+			{
+				categories.map((category) => (
+					<span class="chip">
+						{category.title}: {category.noteCount} complete / {category.plannedTopics.length} planned
+					</span>
+				))
+			}
+		</div>
+	</section>
+
+	<section class="section-panel">
+		<div class="section-heading">
+			<div>
 				<span class="section-label">Categories</span>
 				<h2>Browse by technique family</h2>
-				<p>Each category page mixes finished notes with clearly marked planned topics, so the section can grow without pretending to be complete.</p>
+				<p>Each category page now shows finished notes, planned topics, recommended order, and level distribution, so it is easier to decide whether to revise breadth-first or go deep on one branch.</p>
 			</div>
 		</div>
 		<div class="track-grid">
 			{
-				categories.map((category, index) => (
+				categories.map((category, index) => {
+					const categoryLevels = levelOrder.map(
+						(level) => `${implementedNotes.filter((note) => note.categorySlug === category.slug && note.level === level).length} ${level}`,
+					);
+					return (
 					<a
 						class="card track-card dsa-track-card"
 						data-tone={index % 3 === 0 ? 'cool' : index % 3 === 1 ? 'olive' : 'warm'}
@@ -156,8 +273,13 @@ const learningPath = [
 						<h3>{category.noteCount} published note{category.noteCount === 1 ? '' : 's'}</h3>
 						<p>{category.longDescription}</p>
 						<span class="track-card__link">Open {category.title}</span>
+						<div class="card__meta">
+							<span class="metric">{category.plannedTopics.length} planned</span>
+							<span class="metric">{categoryLevels.join(' / ')}</span>
+						</div>
 					</a>
-				))
+					);
+				})
 			}
 		</div>
 	</section>
@@ -185,6 +307,35 @@ const learningPath = [
 						</div>
 						<p class="cp-year-card__summary">{stage.description}</p>
 						<p class="cp-content__notice">{stage.notes}</p>
+					</article>
+				))
+			}
+		</div>
+	</section>
+
+	<section class="section-panel">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Learning Routes</span>
+				<h2>Choose a path, not just a topic</h2>
+				<p>These routes are meant to reduce thrashing. Each one keeps related ideas close enough that implementation habits carry over from note to note.</p>
+			</div>
+		</div>
+		<div class="cp-year-grid">
+			{
+				guidedTracks.map((track, index) => (
+					<article class="cp-year-card cp-year-card--browse">
+						<div class="cp-year-card__topline">
+							<div>
+								<strong>0{index + 1}</strong>
+								<span>{track.title}</span>
+							</div>
+							<span class="chip" data-tone={index % 4 === 0 ? 'olive' : index % 4 === 1 ? 'cool' : index % 4 === 2 ? 'warm' : 'expert'}>
+								{track.notes.length} notes
+							</span>
+						</div>
+						<p class="cp-year-card__summary">{track.description}</p>
+						<p class="cp-content__notice">{track.notes.map((note) => note.title).join(', ')}</p>
 					</article>
 				))
 			}

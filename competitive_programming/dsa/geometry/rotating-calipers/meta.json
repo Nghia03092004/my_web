@@ -1,0 +1,7 @@
+{
+  "title": "Rotating Calipers",
+  "summary": "Walk two pointers around a convex polygon to enumerate antipodal structure without restarting from scratch.",
+  "level": "advanced",
+  "tags": ["convex polygon", "two pointers", "geometry"],
+  "order": 50
+}

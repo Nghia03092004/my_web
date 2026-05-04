@@ -1,0 +1,7 @@
+{
+  "title": "Virtual Tree",
+  "summary": "Compress a query's marked nodes and the LCAs between them into a much smaller tree that preserves the relevant paths.",
+  "level": "advanced",
+  "tags": ["tree queries", "lca", "compression"],
+  "order": 100
+}

@@ -1,0 +1,7 @@
+{
+  "title": "Ternary Search",
+  "summary": "Optimize a unimodal function on a discrete or continuous domain by keeping the side that still contains the optimum.",
+  "level": "intermediate",
+  "tags": ["optimization", "unimodal", "search"],
+  "order": 15
+}

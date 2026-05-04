@@ -1,0 +1,7 @@
+{
+  "title": "Sorting and Events",
+  "summary": "Turn interval and query problems into a left-to-right sweep over sorted add, remove, and inspect events.",
+  "level": "basic",
+  "tags": ["sweep line", "offline", "intervals"],
+  "order": 35
+}

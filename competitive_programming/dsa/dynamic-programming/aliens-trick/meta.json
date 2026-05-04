@@ -1,0 +1,7 @@
+{
+  "title": "Aliens Trick / Lagrangian Relaxation",
+  "summary": "Replace a hard limit on the number of chosen groups with a penalty and binary search that penalty.",
+  "level": "advanced",
+  "tags": ["dp optimization", "lagrangian", "parametric search"],
+  "order": 90
+}

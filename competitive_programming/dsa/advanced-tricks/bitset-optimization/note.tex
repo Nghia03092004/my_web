@@ -1,0 +1,102 @@
+\section*{Overview}
+
+Bitset optimization is the habit of rephrasing boolean-state transitions so that one machine word updates 64 states at
+once. In competitive programming this often turns borderline \(O(n^2)\) boolean DP or dense-graph processing into
+something that actually passes.
+
+\section*{When to Use It}
+
+It is especially effective when:
+
+\begin{itemize}
+  \item the state is yes/no rather than numeric,
+  \item the transition is based on shifts, AND, OR, XOR, or intersection,
+  \item the dimension is large enough that a \(64\times\) constant-factor improvement matters.
+\end{itemize}
+
+\section*{Core Idea}
+
+Store a boolean array as packed bits instead of \texttt{bool}s. Then operations such as
+\[
+\texttt{reachable |= reachable << w}
+\]
+update many states at once.
+
+\section*{Key Insight}
+
+The optimization is not magic. It works because the CPU already knows how to shift, mask, and combine entire words very
+quickly. If the transition can be written in those operations, you get parallelism ``for free'' without threads or SIMD
+intrinsics.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Given positive integers \(a_1, a_2, \dots, a_n\) with total sum at most \(S\), determine which subset sums are
+reachable.
+
+\paragraph{Why bitsets fit.}
+The ordinary DP is
+\[
+\texttt{dp[s] = dp[s] or dp[s - a_i]}.
+\]
+With a bitset, one item update becomes \texttt{dp |= dp << a\_i}. That replaces \(O(S)\) scalar transitions with
+\(O(S / 64)\) word operations.
+
+\section*{Problem Pattern}
+
+The same trick appears in:
+
+\begin{itemize}
+  \item subset-sum and knapsack reachability,
+  \item dense graph transitive closure with row bitsets,
+  \item maintaining large character sets or forbidden masks,
+  \item fast set intersections in Mo-style or offline problems.
+\end{itemize}
+
+\section*{Correctness Intuition}
+
+The packed representation does not change the DP semantics. Bit \(s\) is still ``sum \(s\) is reachable.'' The bit
+operations merely update 64 such booleans in parallel.
+
+\section*{Complexity Analysis}
+
+If the original boolean DP is \(O(NM)\), the bitset version is usually \(O(NM / W)\), where \(W\) is the machine word
+size, typically \(64\).
+
+\section*{Implementation}
+
+The sample code gives a reusable subset-sum bitset wrapper. In actual contest code I often use \texttt{std::bitset} for
+compile-time bounds and a manual \texttt{vector<uint64\_t>} wrapper when the bound is only known at runtime.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Applying bitsets to numeric DP where each state stores a large value, not a boolean.
+  \item Forgetting the memory cost; a bitset of size \(10^7\) is already noticeable.
+  \item Using \texttt{std::bitset} when the size is only known at runtime.
+  \item Expecting asymptotic improvements when the transition itself is not bit-parallel.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Manual dynamic bitsets with \texttt{uint64\_t}.
+  \item Bitset adjacency rows for dense graph BFS or transitive closure.
+  \item Using \texttt{\_\_builtin\_popcountll} on words to count set bits quickly after intersections.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Subset-sum reachability with large total sum.
+  \item Dense graph reachability or clique-style adjacency intersections.
+  \item Any boolean DP whose transition is shift-or-mask based.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://usaco.guide/plat/bitsets}{USACO Guide: Bitsets}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+  \item \href{https://github.com/kth-competitive-programming/kactl}{KACTL}.
+\end{itemize}

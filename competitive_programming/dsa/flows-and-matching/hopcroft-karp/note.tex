@@ -1,0 +1,86 @@
+\section*{Overview}
+
+Hopcroft-Karp is the maximum matching algorithm I use when a bipartite graph is large enough that the simple Kuhn DFS
+starts to feel slow. The main upgrade is phase-based augmentation: instead of finding one augmenting path at a time, it
+finds many vertex-disjoint shortest augmenting paths in the same BFS/DFS round.
+
+\section*{When to Use It}
+
+Use it when:
+
+\begin{itemize}
+  \item the graph is bipartite,
+  \item the goal is a maximum cardinality matching,
+  \item \(O(VE)\) augmenting-path code is too slow.
+\end{itemize}
+
+\section*{Core Idea}
+
+Alternate between two steps:
+
+\begin{itemize}
+  \item BFS from all unmatched left-side vertices to compute distances in the alternating graph,
+  \item DFS that only follows edges consistent with those shortest distances to find a maximal set of shortest augmenting
+  paths.
+\end{itemize}
+
+\section*{Key Insight}
+
+After one phase, all shortest augmenting paths disappear. Therefore the distance from free left vertices to free right
+vertices strictly increases from phase to phase, which limits how many phases can occur.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+There are workers on the left, jobs on the right, and an edge means the worker can do that job. Find the largest number
+of worker-job assignments with no repeated worker or job.
+
+\paragraph{Why Hopcroft-Karp fits.}
+Bipartite matching is exactly the right abstraction. The phase idea matters when the graph is dense or when both sides
+have around \(10^5\) vertices total.
+
+\section*{Correctness Intuition}
+
+BFS layers the alternating graph by shortest augmenting-path length. DFS then uses only those shortest layers, so every
+augmentation in the phase has minimum length. Because the chosen paths are vertex-disjoint, they can all be applied
+simultaneously without conflict.
+
+\section*{Complexity Analysis}
+
+The complexity is \(O(E\sqrt{V})\).
+
+\section*{Implementation}
+
+The code stores the left partition explicitly and returns both the matching size and the matched partner arrays.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Forgetting which side the BFS starts from.
+  \item Mixing 0-indexed and 1-indexed NIL conventions.
+  \item Using Hopcroft-Karp for weighted matching; that is a different problem.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Minimum vertex cover from the final alternating-reachability state.
+  \item Dinic on the flow network when you want one shared framework.
+  \item Kuhn algorithm for smaller graphs or easier implementation.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Maximum bipartite matching.
+  \item Assignment feasibility on an unweighted bipartite graph.
+  \item Derive minimum vertex cover after computing the matching.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://cp-algorithms.com/graph/kuhn_maximum_bipartite_matching.html}{cp-algorithms: Bipartite Matching}.
+  \item \href{https://usaco.guide/plat/flow?lang=cpp}{USACO Guide: Flow and Matching}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+\end{itemize}

@@ -1,92 +1,94 @@
 \section*{Overview}
 
-Aho-Corasick is the right tool when one text must be checked against many patterns at once. It starts from a trie of
-the patterns, then adds failure links so the scan through the text never needs to restart from scratch.
+Aho-Corasick is the multi-pattern string matcher for ``one text, many patterns.'' It starts from a trie of all
+patterns, then adds failure links so the scan never restarts from scratch after a mismatch.
 
 \section*{When to Use It}
 
-Use Aho-Corasick when:
+Use it when:
 
 \begin{itemize}
   \item there are many patterns,
-  \item the text is long enough that checking each pattern independently is too slow,
-  \item the alphabet is manageable and pattern reuse through shared prefixes is significant.
+  \item the text is long enough that running KMP or naive search for each pattern separately is too slow,
+  \item shared pattern prefixes are significant.
 \end{itemize}
 
 \section*{Core Idea}
 
-Build a trie of all patterns. Then for each node, compute a failure link to the longest proper suffix of that node's
+Build a trie of the patterns. For each trie node, compute a failure link to the longest proper suffix of that node's
 string that is also a trie prefix. During text scanning:
 
 \begin{itemize}
-  \item follow trie edges when possible,
-  \item otherwise follow failure links until a valid transition exists.
+  \item follow the next trie edge when it exists,
+  \item otherwise follow failure links until a valid transition exists,
+  \item report all pattern endings attached to the reached state.
 \end{itemize}
 
 \includegraphics[width=\textwidth]{figures/failure-links.svg}
 
 \section*{Key Insight}
 
-The failure link is the multi-pattern analog of KMP fallback. After a mismatch, it preserves the longest suffix that is
-still a valid prefix of some pattern, so already-matched text is never rescanned.
+The failure link is the multi-pattern version of the KMP fallback. It preserves the longest suffix of the processed text
+that could still grow into some pattern. That is why already-checked characters are never rescanned.
 
-\section*{Operations / Main Technique}
+\section*{Worked Problem}
 
-\begin{itemize}
-  \item insert all patterns into the trie,
-  \item BFS to build failure links,
-  \item scan the text once,
-  \item report matches from the output list of the current state.
-\end{itemize}
+\paragraph{Problem.}
+You are given a dictionary of words and one long text. Count how many times each dictionary word appears in the text.
 
-\paragraph{Worked example.}
-If the automaton is currently at the node for \(\texttt{hers}\) and the next character breaks that path, the failure
-link may jump to the node for \(\texttt{s}\), \(\texttt{rs}\), or another proper suffix prefix that still matters,
-depending on the inserted patterns.
+\paragraph{Why Aho-Corasick fits.}
+All patterns are queried against the same text. Their shared prefixes belong in one trie, and failure links prevent
+restarting from the root after every mismatch.
+
+\paragraph{Scan view.}
+If the current state spells \texttt{hers} and the next character breaks that path, the automaton jumps by failure links
+to the longest suffix that is still a valid trie prefix, for example \texttt{s} or \texttt{he}, depending on the
+dictionary.
 
 \section*{Correctness Intuition}
 
-At every text position, the current automaton state represents the longest suffix of the processed text that is also a
-trie prefix. A normal transition extends that suffix; a failure link shortens it to the next-best candidate. So every
-pattern ending at the current position is eventually exposed by the output chain of the reached state.
+At every position, the automaton state represents the longest suffix of the processed text that is also a trie prefix.
+Normal transitions extend that suffix; failure links shorten it to the next-best valid candidate. Therefore every
+pattern ending at the current position is exposed either directly in this state or through output information inherited
+from failure ancestors.
 
 \section*{Complexity Analysis}
 
-If the total pattern length is \(m\) and the text length is \(n\), the construction plus scan is linear in those sizes
-up to the alphabet-transition representation.
+If total pattern length is \(m\) and text length is \(n\), construction plus scanning is linear in \(m+n\) up to the
+chosen transition representation.
 
 \section*{Implementation}
 
-The code uses a lowercase alphabet trie with:
+The code uses a lowercase alphabet trie and supports:
 
 \begin{itemize}
   \item pattern insertion,
   \item failure-link construction,
-  \item text scanning that counts occurrences of each pattern.
+  \item text scanning that counts occurrences of every pattern.
 \end{itemize}
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Forgetting to merge output information along failure links.
-  \item Using the automaton when the number of patterns is tiny and simple KMP loops would be shorter.
-  \item Mishandling large alphabets with a dense transition table that wastes memory.
+  \item Forgetting to propagate output information along failure links.
+  \item Using a dense transition table on a huge alphabet and wasting memory.
+  \item Treating the automaton state as if it stored only one matched pattern.
 \end{itemize}
 
 \section*{Variants / Extensions}
 
 \begin{itemize}
-  \item Count total matches, distinct matched patterns, or first/last match positions.
-  \item DP over the automaton for forbidden-substring or bounded-string construction problems.
+  \item DP on the automaton for forbidden-substring problems.
   \item Sparse transition maps for larger alphabets.
+  \item Counting total matches, distinct matches, or first/last occurrence positions.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
-  \item Multi-pattern matching in one long text.
-  \item Count how many times each dictionary word appears.
-  \item DP on strings that must avoid a set of bad patterns.
+  \item Count how many times each pattern appears in a long text.
+  \item Mark all positions where any forbidden pattern occurs.
+  \item DP on strings that must avoid a set of bad substrings.
 \end{itemize}
 
 \section*{References}
@@ -94,5 +96,5 @@ The code uses a lowercase alphabet trie with:
 \begin{itemize}
   \item \href{https://cp-algorithms.com/string/aho_corasick.html}{cp-algorithms: Aho-Corasick}.
   \item \href{https://usaco.guide/adv/string-search}{USACO Guide: String Searching}.
-  \item \href{https://codeforces.com/catalog?locale=en}{Codeforces Catalog}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
 \end{itemize}

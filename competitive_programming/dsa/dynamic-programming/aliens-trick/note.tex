@@ -1,0 +1,105 @@
+\section*{Overview}
+
+Aliens trick is the competitive-programming name for a small Lagrangian-relaxation pattern: if the hard part of a DP is
+``use at most \(K\) groups / segments / chosen objects,'' add a penalty \(\lambda\) per chosen group, solve the relaxed
+problem quickly, and binary search \(\lambda\).
+
+\section*{When to Use It}
+
+Use it when:
+
+\begin{itemize}
+  \item the original DP has an extra dimension counting how many segments or objects were used,
+  \item fixing a penalty per chosen unit collapses that dimension,
+  \item the number of chosen units in the optimal relaxed solution changes monotonically with the penalty.
+\end{itemize}
+
+\section*{Core Idea}
+
+Turn
+\[
+\text{maximize } \texttt{gain} \quad \text{subject to } \texttt{count} \le K
+\]
+into
+\[
+\text{maximize } \texttt{gain} - \lambda \cdot \texttt{count}.
+\]
+
+For one fixed \(\lambda\), compute both:
+
+\begin{itemize}
+  \item the best penalized value,
+  \item how many groups that optimum used.
+\end{itemize}
+
+Then binary search \(\lambda\) until the chosen-count crosses \(K\), and undo the penalty at the end.
+
+\section*{Key Insight}
+
+The penalty parameter acts like a shadow price for opening a new group. If opening too many groups is the only thing
+that makes the DP expensive, charging for each group can remove the explicit count dimension entirely.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Given an array of profits, choose at most \(K\) pairwise disjoint non-empty subarrays with maximum total sum.
+
+\paragraph{Why the trick fits.}
+The natural DP has a dimension for ``how many subarrays have been started so far.'' If starting a new subarray costs a
+penalty \(\lambda\), the DP becomes linear:
+
+\begin{itemize}
+  \item either extend the current chosen segment,
+  \item or start a new segment and pay \(\lambda\).
+\end{itemize}
+
+\section*{Correctness Intuition}
+
+As \(\lambda\) increases, starting a new group becomes less attractive, so the optimal group count does not increase.
+That monotonicity makes the penalty searchable. After finding the largest \(\lambda\) that still uses at least \(K\)
+groups, adding back \(\lambda K\) recovers the original objective value.
+
+\section*{Complexity Analysis}
+
+If the relaxed solver costs \(T\), the total cost is \(O(T \log A)\), where \(A\) is the searched penalty range.
+
+\section*{Implementation}
+
+The code below solves the ``at most \(K\) disjoint subarrays'' problem. The relaxed solver returns a pair:
+
+\begin{itemize}
+  \item penalized score,
+  \item number of used segments.
+\end{itemize}
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Applying the trick without monotonicity of the chosen count in \(\lambda\).
+  \item Forgetting to define how ties compare; the segment count on equal penalized score matters.
+  \item Using it when the relaxed DP is still too slow, which means the trick removed no real bottleneck.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Partition DPs with a penalty per segment.
+  \item Resource-limited problems where one capacity is turned into a multiplier.
+  \item Combining the relaxed solver with convex hull or divide-and-conquer optimization.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Maximize profit using at most \(K\) disjoint segments.
+  \item Minimize cost using at most \(K\) groups after adding a per-group penalty.
+  \item DP problems where one count dimension is the only reason the state explodes.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+  \item \href{https://usaco.guide/adv/lagrange?lang=cpp}{USACO Guide: Lagrangian Relaxation}.
+  \item \href{https://oiwiki.com/dp/opt/wqs-binary-search/}{OI Wiki: WQS Binary Search}.
+\end{itemize}

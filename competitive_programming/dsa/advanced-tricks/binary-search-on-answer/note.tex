@@ -1,67 +1,105 @@
 \section*{Overview}
 
-Binary search on answer is a modeling trick rather than a data structure. The goal is to turn ``find the best value''
-into ``can I achieve at least / at most this value?'' Once that yes/no question is monotone, ordinary binary search
-does the rest.
+Binary search on answer is the pattern for optimization problems where the answer itself is not easy to construct
+directly, but feasibility at a fixed candidate value \(\lambda\) \emph{is} easy to test.
 
 \section*{When to Use It}
 
 Use it when:
 
 \begin{itemize}
-  \item the statement asks for a minimum feasible or maximum feasible value,
-  \item a candidate answer can be checked faster than trying all answers directly,
-  \item the feasibility condition changes only once across the ordered search space.
+  \item the statement asks for a minimum feasible value or maximum feasible value,
+  \item there is a checker \(\texttt{can}(\lambda)\),
+  \item the checker is monotone over the searched answer space.
 \end{itemize}
+
+The usual contest phrasing is ``minimize the maximum'', ``maximize the minimum'', or ``find the first time / capacity /
+threshold where the plan becomes possible.''
 
 \section*{Core Idea}
 
-Pick a candidate answer \(x\). Write a checker:
+Turn the optimization target into a yes/no predicate:
 \[
-\texttt{can(x)} = \text{``the problem is solvable with answer } x \text{''}.
+\texttt{can}(\lambda) = \text{``the problem is solvable if the answer is constrained by } \lambda \text{''}.
 \]
-If the set of true values is an interval, binary search finds the boundary.
+
+Then prove that once the predicate becomes true, it stays true forever, or once it becomes false, it stays false
+forever. Ordinary binary search finds the boundary.
 
 \section*{Key Insight}
 
-The difficult part is usually not the search loop. It is simplifying the optimization target until the checker becomes
-monotone. That checker often ends up being greedy, prefix-sum based, or a smaller DP.
+The search loop is almost never the real difficulty. The real work is modeling. A good note to self is:
 
-\section*{Operations / Main Technique}
+\begin{quote}
+Do not start writing the binary search until the predicate and its monotonicity are both explicit.
+\end{quote}
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+An array of positive task durations must be partitioned into at most \(k\) consecutive days. Minimize the maximum total
+duration assigned to one day.
+
+\paragraph{Why binary search fits.}
+Fix a candidate limit \(L\). The checker asks: can the tasks be split into at most \(k\) consecutive groups such that
+every group sum is at most \(L\)?
+
+\paragraph{Checker.}
+Scan left to right and greedily extend the current day while the sum stays \(\le L\). When adding the next task would
+exceed \(L\), start a new day.
+
+\paragraph{Why the checker is correct.}
+For positive tasks, postponing a split cannot hurt: every extra task only increases the current day's load. So the
+greedy scan uses the minimum possible number of groups for this limit. If even that greedy grouping needs more than
+\(k\) days, no other grouping can do better.
+
+\paragraph{Why the predicate is monotone.}
+If limit \(L\) is feasible, then every larger limit is also feasible because the same partition still works.
+
+\section*{Problem Pattern}
+
+This modeling trick reappears in:
 
 \begin{itemize}
-  \item define the answer space,
-  \item prove the feasibility predicate is monotone,
-  \item derive a checker,
-  \item binary search the first true or last true value.
+  \item maximum minimum distance under greedy placement,
+  \item machine-capacity or scheduling thresholds,
+  \item shortest time until a process can finish,
+  \item DP or prefix-sum checkers that become feasible past one boundary.
 \end{itemize}
-
-\paragraph{Worked example.}
-For partitioning an array into at most \(k\) segments while minimizing the maximum segment sum, the checker greedily
-starts a new segment whenever adding the next value would exceed the candidate limit. If limit \(x\) works, any larger
-limit works too.
 
 \section*{Correctness Intuition}
 
-Binary search itself is correct once the monotone predicate exists. The real proof burden is showing that the checker
-answers feasibility correctly and that feasibility indeed moves in only one direction as the answer changes.
+Binary search itself contributes no special proof once the predicate is monotone. The proof burden sits entirely inside:
+
+\begin{itemize}
+  \item the checker correctness,
+  \item the monotonicity argument,
+  \item the bounds that guarantee the answer lies in the searched interval.
+\end{itemize}
 
 \section*{Complexity Analysis}
 
-If the checker costs \(T\) and the answer space has size \(A\), the total cost is \(O(T \log A)\).
+If the checker costs \(T\) and the answer space size is \(A\), the total cost is \(O(T \log A)\).
+
+For the partition example, the checker is linear, so the full solution is \(O(n \log \sum a_i)\).
 
 \section*{Implementation}
 
-The code keeps a generic \texttt{first\_true} template and one sample checker for the segment-partition problem above.
-That captures the pattern without tying it to one statement.
+The code keeps:
+
+\begin{itemize}
+  \item a generic \texttt{first\_true} binary search,
+  \item a concrete checker for the partition problem,
+  \item a helper that returns the minimum feasible limit.
+\end{itemize}
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
   \item Searching before proving monotonicity.
-  \item Choosing bounds that do not contain the answer.
-  \item Writing a checker that is too slow, making the outer binary search irrelevant.
-  \item Using integer search for a problem that really needs real-valued precision control.
+  \item Picking bounds that do not actually contain the answer.
+  \item Using a slow checker so the outer \(\log\) factor is irrelevant compared to a better direct solution.
+  \item Applying integer binary search to a real-valued optimization problem without a precision plan.
 \end{itemize}
 
 \section*{Variants / Extensions}
@@ -69,15 +107,15 @@ That captures the pattern without tying it to one statement.
 \begin{itemize}
   \item Real-valued answer search.
   \item Parallel binary search for many offline queries.
-  \item Parametric search with more structural checkers.
+  \item Parametric search where the checker itself is another greedy or DP routine.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
-  \item Minimize the largest segment sum.
-  \item Maximize minimum distance under greedy placement.
-  \item Any ``minimum feasible'' scheduling or capacity problem with a monotone checker.
+  \item Partition an array while minimizing the largest segment sum.
+  \item Place routers or cows while maximizing the minimum distance.
+  \item Find the smallest machine speed, budget, or threshold that makes a plan feasible.
 \end{itemize}
 
 \section*{References}

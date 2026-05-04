@@ -1,0 +1,84 @@
+\section*{Overview}
+
+Modular arithmetic is not just ``take \(\% M\) often.'' The important part is knowing which algebraic operations still
+behave well after reduction and which ones need extra conditions.
+
+\section*{When to Use It}
+
+Use it whenever:
+
+\begin{itemize}
+  \item answers are required modulo \(M\),
+  \item intermediate values grow too large,
+  \item a recurrence, combinatorial count, or matrix product naturally lives in \(\mathbb{Z}/M\mathbb{Z}\).
+\end{itemize}
+
+\section*{Core Idea}
+
+Addition, subtraction, and multiplication respect reduction:
+\[
+(a+b)\bmod M,\quad (a-b)\bmod M,\quad (ab)\bmod M.
+\]
+Division does \emph{not} exist automatically. Dividing by \(x\) means multiplying by its modular inverse, which only
+makes sense when the inverse exists.
+
+\section*{Key Insight}
+
+The algebraic structure matters. If the modulus is prime, every non-zero residue has an inverse. For composite moduli,
+only numbers coprime to the modulus are invertible.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Count the number of ways to build strings of length \(n\), where the recurrence doubles or triples previous counts, and
+print the answer modulo \(10^9+7\).
+
+\paragraph{Why modular arithmetic fits.}
+The recurrence only needs addition and multiplication, both of which are safe modulo \(M\). So the whole DP can stay in
+reduced form from the start.
+
+\section*{Correctness Intuition}
+
+Reducing after each safe operation does not change the final residue because reduction is compatible with addition and
+multiplication. The only time care is needed is when an expression secretly relies on division or ordering.
+
+\section*{Complexity Analysis}
+
+The arithmetic operations stay \(O(1)\). The benefit is numerical safety, not asymptotic improvement.
+
+\section*{Implementation}
+
+The code gives a small \texttt{ModInt} template with normalization, addition, subtraction, multiplication, and fast
+exponentiation.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Using negative residues without re-normalizing into \([0, M-1]\).
+  \item Writing \texttt{a / b \% MOD} as if ordinary division were valid.
+  \item Overflowing \texttt{a * b} before the modulus is applied.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Modular inverse and division.
+  \item CRT when one modulus is not enough.
+  \item NTT-friendly moduli for fast polynomial multiplication.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item DP or combinatorics modulo a prime.
+  \item Fast exponentiation and modular recurrence simulation.
+  \item Any counting problem whose raw numbers are too large to store directly.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://cp-algorithms.com/algebra/module-inverse.html}{cp-algorithms: Modular Inverse and Modular Arithmetic}.
+  \item \href{https://atcoder.github.io/ac-library/production/document_en/modint.html}{AtCoder Library: modint}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+\end{itemize}

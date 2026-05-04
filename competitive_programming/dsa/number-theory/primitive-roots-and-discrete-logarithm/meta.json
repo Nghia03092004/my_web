@@ -1,0 +1,7 @@
+{
+  "title": "Primitive Roots and Discrete Logarithm",
+  "summary": "Work inside cyclic multiplicative groups by finding generators and solving exponent equations with baby-step giant-step.",
+  "level": "advanced",
+  "tags": ["cyclic groups", "bsgs", "modular arithmetic"],
+  "order": 85
+}

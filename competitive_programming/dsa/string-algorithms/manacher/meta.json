@@ -1,0 +1,7 @@
+{
+  "title": "Manacher",
+  "summary": "Compute longest odd and even palindromic radii around every center in linear time.",
+  "level": "advanced",
+  "tags": ["palindrome", "linear time", "string"],
+  "order": 65
+}

@@ -1,0 +1,99 @@
+\section*{Overview}
+
+The Mobius function \(\mu(n)\) is the standard tool for removing overcounting across divisors. In practice it appears
+when a problem wants ``gcd equals \(1\)'' or ``exactly this divisor'' and the easier count is over multiples instead.
+
+\section*{When to Use It}
+
+Use it when:
+
+\begin{itemize}
+  \item divisor inclusion-exclusion is visible,
+  \item you can count objects divisible by \(d\) more easily than objects with gcd exactly \(1\),
+  \item a multiplicative-function sieve is already nearby.
+\end{itemize}
+
+\section*{Core Idea}
+
+The Mobius function is:
+
+\begin{itemize}
+  \item \(0\) if \(n\) has a squared prime factor,
+  \item \(1\) if \(n\) is a product of an even number of distinct primes,
+  \item \(-1\) if \(n\) is a product of an odd number of distinct primes.
+\end{itemize}
+
+Its main identity is
+\[
+\sum_{d \mid n} \mu(d) =
+\begin{cases}
+1 & n = 1, \\
+0 & n > 1.
+\end{cases}
+\]
+
+\section*{Key Insight}
+
+That identity is a switch that isolates gcd \(=1\). When you sum over divisors with coefficient \(\mu(d)\), every number
+with a larger common divisor cancels out.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+How many pairs \((x, y)\) with \(1 \le x \le n\), \(1 \le y \le m\) satisfy \(\gcd(x, y) = 1\)?
+
+\paragraph{Why Mobius fits.}
+For one divisor \(d\), the number of pairs where \(d\) divides both numbers is
+\[
+\left\lfloor \frac{n}{d} \right\rfloor \left\lfloor \frac{m}{d} \right\rfloor.
+\]
+Applying Mobius inversion gives
+\[
+\sum_{d=1}^{\min(n,m)} \mu(d)\left\lfloor \frac{n}{d} \right\rfloor \left\lfloor \frac{m}{d} \right\rfloor.
+\]
+
+\section*{Correctness Intuition}
+
+Each pair contributes to all common divisors of \(\gcd(x,y)\). The Mobius coefficients cancel every pair whose gcd is
+greater than \(1\), leaving only the coprime pairs.
+
+\section*{Complexity Analysis}
+
+Computing \(\mu\) up to \(N\) by linear sieve takes \(O(N)\). The direct summation formula above is \(O(N)\), with
+further harmonic-speed tricks possible in heavier problems.
+
+\section*{Implementation}
+
+The code computes \(\mu\) with a linear sieve and includes the coprime-pair formula.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Mixing Mobius inversion with Euler phi; they answer different questions.
+  \item Forgetting that squareful numbers contribute \(0\).
+  \item Expanding divisor sums naively without checking whether a harmonic grouping is needed.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Mobius inversion on Dirichlet convolution.
+  \item Counting tuples with gcd \(1\).
+  \item Summatory multiplicative-function problems with prefix tricks.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Count coprime pairs.
+  \item Count pairs with gcd exactly \(g\).
+  \item Any divisor-sum problem where cancellation over multiples is the main obstacle.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://cp-algorithms.com/algebra/mobius-function.html}{cp-algorithms: Mobius Function}.
+  \item \href{https://oiwiki.com/math/number-theory/mobius/}{OI Wiki: Mobius Function}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+\end{itemize}

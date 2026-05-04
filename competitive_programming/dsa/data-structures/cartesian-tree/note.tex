@@ -1,0 +1,103 @@
+\section*{Overview}
+
+A Cartesian tree turns an array into a binary tree that preserves \emph{both} index order and value order:
+
+\begin{itemize}
+  \item inorder traversal gives the original array order,
+  \item the tree satisfies a heap property on values.
+\end{itemize}
+
+That combination makes it useful whenever a range wants to split around its minimum or maximum element.
+
+\section*{When to Use It}
+
+Use it when:
+
+\begin{itemize}
+  \item interval structure depends on the minimum or maximum element of the interval,
+  \item RMQ should become an LCA problem,
+  \item the statement hides recursive splits around dominant elements.
+\end{itemize}
+
+\section*{Core Idea}
+
+For a min Cartesian tree, the root of any subarray is its minimum element. The left child is built from the part to the
+left, and the right child from the part to the right. A monotonic stack builds the whole tree in linear time.
+
+\section*{Key Insight}
+
+The tree stores the same information as repeated ``pick the minimum and recurse,'' but without paying \(O(n^2)\) for
+that recursion literally. The stack simulates how intervals nest around decreasing minima.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Given an array, repeatedly choose the minimum element of a segment as the segment's root and split left/right. Build the
+entire recursion tree.
+
+\paragraph{Why Cartesian tree fits.}
+That recursion tree \emph{is} the min Cartesian tree. The array index order becomes the inorder traversal, so subtree
+boundaries match contiguous ranges automatically.
+
+\section*{Problem Pattern}
+
+This structure appears in:
+
+\begin{itemize}
+  \item RMQ to LCA reductions,
+  \item histogram problems,
+  \item divide-and-conquer recurrences that always pivot on the min or max element.
+\end{itemize}
+
+\section*{Correctness Intuition}
+
+The monotonic stack keeps the current right spine of the tree. When a smaller value arrives, larger values to its left
+can no longer stay above it in a min-heap tree, so they are popped and attached as its left child or as descendants on
+the correct side. The inorder order remains the original index order throughout.
+
+\section*{Complexity Analysis}
+
+Building the tree takes \(O(n)\) time and \(O(n)\) memory.
+
+\section*{Implementation}
+
+The code constructs the min Cartesian tree and returns:
+
+\begin{itemize}
+  \item the root index,
+  \item parent,
+  \item left child,
+  \item right child arrays.
+\end{itemize}
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Mixing the min-tree and max-tree inequalities.
+  \item Ignoring equal values; the tie rule must be consistent.
+  \item Forgetting that the tree shape depends on whether ties favor earlier or later indices.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Max Cartesian tree.
+  \item RMQ via Euler tour + LCA on the Cartesian tree.
+  \item Parsing interval DP recurrences through subtree structure.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Build the Cartesian tree of an array.
+  \item Reduce RMQ to LCA.
+  \item Reconstruct recursion around interval minima or maxima.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://cp-algorithms.com/graph/rmq_linear.html}{cp-algorithms: Solve RMQ by Finding LCA}.
+  \item \href{https://en.oi-wiki.org/ds/cartesian-tree/}{OI Wiki: Cartesian Tree}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+\end{itemize}

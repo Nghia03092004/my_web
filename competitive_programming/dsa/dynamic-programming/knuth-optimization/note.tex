@@ -1,0 +1,85 @@
+\section*{Overview}
+
+Knuth optimization is the interval-DP speedup for recurrences of the form
+\[
+dp[l][r] = \min_{k \in [l, r-1]} \bigl(dp[l][k] + dp[k+1][r]\bigr) + C(l, r),
+\]
+when the best split point moves monotonically with the interval.
+
+\section*{When to Use It}
+
+Use it when:
+
+\begin{itemize}
+  \item the DP is on intervals,
+  \item the transition tries every split point,
+  \item the cost satisfies the quadrangle-inequality style conditions that imply
+  \[
+  opt[l][r-1] \le opt[l][r] \le opt[l+1][r].
+  \]
+\end{itemize}
+
+\section*{Core Idea}
+
+Instead of searching all split points for every interval, only search between the previously known neighboring optimal
+split points.
+
+\section*{Key Insight}
+
+The speedup is not ``because interval DP is nice.'' It is because the argmin drifts slowly. Once you know the optimum
+split for adjacent intervals, the next optimum is trapped between them.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+You have adjacent files with sizes \(a_1, \dots, a_n\). Merging two neighboring groups costs the total size of the
+merged group. Find the minimum total merge cost.
+
+\paragraph{Why Knuth fits.}
+The ordinary interval DP is cubic. This cost function satisfies the needed monotonicity, so the split search range can
+be narrowed to the Knuth interval.
+
+\section*{Correctness Intuition}
+
+The theorem behind Knuth optimization guarantees the monotone-opt property. Once that is true, searching outside
+\([opt[l][r-1], opt[l+1][r]]\) cannot improve the answer because the argmin for \([l,r]\) is known to stay inside.
+
+\section*{Complexity Analysis}
+
+The complexity drops from \(O(n^3)\) to \(O(n^2)\).
+
+\section*{Implementation}
+
+The sample code solves the adjacent-file merging problem with prefix sums and Knuth's search bounds.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Applying Knuth optimization without proving the monotone-opt condition.
+  \item Confusing it with divide-and-conquer DP optimization; the recurrences are different.
+  \item Filling intervals in the wrong order and reading \texttt{opt} values before they exist.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Optimal BST-style interval DP.
+  \item Any interval merge or partition DP with the right quadrangle structure.
+  \item Divide-and-conquer optimization when the recurrence is one-sided instead of interval-based.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item File merging with adjacent merges.
+  \item Optimal BST-style interval partitioning.
+  \item Any interval DP where split-point monotonicity can be proved.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://cp-algorithms.com/dynamic_programming/knuth-optimization.html}{cp-algorithms: Knuth's Optimization}.
+  \item \href{https://usaco.guide/adv/knuth?lang=cpp}{USACO Guide: Knuth Optimization}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+\end{itemize}

@@ -1,0 +1,94 @@
+\section*{Overview}
+
+A 2D Fenwick tree is the direct generalization of the ordinary Fenwick tree from arrays to grids. It is the cleanest
+tool for:
+
+\begin{itemize}
+  \item point updates on a matrix,
+  \item prefix-sum queries on rectangles,
+  \item rectangle sums via inclusion-exclusion.
+\end{itemize}
+
+\section*{When to Use It}
+
+Use it when:
+
+\begin{itemize}
+  \item the data lives on a 2D grid,
+  \item updates touch one cell at a time,
+  \item queries ask for sums over axis-aligned rectangles.
+\end{itemize}
+
+If the grid is huge but only a few coordinates ever appear, combine it with coordinate compression first.
+
+\section*{Core Idea}
+
+The one-dimensional Fenwick tree decomposes a prefix into power-of-two blocks. The 2D version does the same in both
+coordinates. Updating one cell climbs through all ancestors in the \(x\) dimension and, inside each of those, through
+all ancestors in the \(y\) dimension.
+
+\section*{Key Insight}
+
+The logarithms multiply, not the dimensions of the whole grid. That is why the cost is \(O(\log n \log m)\) rather
+than linear in one direction.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Maintain a board where stars can be added or removed from cells, and answer the number of stars inside any rectangle
+\([x_1, x_2] \times [y_1, y_2]\).
+
+\paragraph{Why 2D Fenwick fits.}
+Rectangle sums reduce to four prefix sums:
+\[
+\texttt{sum}(x_2,y_2)-\texttt{sum}(x_1-1,y_2)-\texttt{sum}(x_2,y_1-1)+\texttt{sum}(x_1-1,y_1-1).
+\]
+
+\section*{Correctness Intuition}
+
+Each cell contributes to exactly the 2D Fenwick blocks that cover it, just as in one dimension. Prefix queries collect
+exactly the blocks needed to tile the requested prefix rectangle without overlap.
+
+\section*{Complexity Analysis}
+
+\begin{itemize}
+  \item point update: \(O(\log n \log m)\),
+  \item prefix sum: \(O(\log n \log m)\),
+  \item rectangle sum: \(O(\log n \log m)\).
+\end{itemize}
+
+\section*{Implementation}
+
+The sample code supports point add and rectangle sum queries on a 1-indexed grid.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Forgetting 1-indexing.
+  \item Accidentally allocating a full \(n \times m\) structure when compression was needed.
+  \item Using it when the problem really needs rectangle updates or range updates, which require extra machinery.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Coordinate-compressed sparse 2D Fenwick tree.
+  \item Higher-dimensional Fenwick trees.
+  \item 2D segment tree when the update/query model is more complicated.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Point update and rectangle sum on a grid.
+  \item Dynamic counting of marked cells inside rectangles.
+  \item Compressed-coordinate rectangle query problems.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://cp-algorithms.com/data_structures/fenwick.html}{cp-algorithms: Fenwick Tree}.
+  \item \href{https://usaco.guide/plat/2DRQ}{USACO Guide: 2D Range Queries}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+\end{itemize}

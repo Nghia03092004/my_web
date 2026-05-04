@@ -83,6 +83,7 @@ const CATEGORY_DEFINITIONS = [
 		plannedTopics: [
 			{ title: 'Complexity analysis', status: 'planned' },
 			{ title: 'Sorting', status: 'planned' },
+			{ title: 'Sweep line basics', status: 'outline' },
 		],
 	},
 	{
@@ -92,10 +93,9 @@ const CATEGORY_DEFINITIONS = [
 		longDescription:
 			'This branch focuses on structures that trade memory, invariants, or amortization for faster updates and queries.',
 		plannedTopics: [
-			{ title: 'Stack / queue / deque', status: 'planned' },
 			{ title: 'Priority queue', status: 'planned' },
-			{ title: 'Wavelet tree', status: 'outline' },
 			{ title: 'Persistent DSU', status: 'outline' },
+			{ title: 'Segment tree beats', status: 'outline' },
 		],
 	},
 	{
@@ -108,7 +108,6 @@ const CATEGORY_DEFINITIONS = [
 			{ title: 'Bellman-Ford', status: 'planned' },
 			{ title: 'Floyd-Warshall', status: 'planned' },
 			{ title: 'DSU on tree', status: 'planned' },
-			{ title: 'Virtual tree', status: 'outline' },
 			{ title: 'Dominator tree', status: 'outline' },
 		],
 	},
@@ -121,8 +120,6 @@ const CATEGORY_DEFINITIONS = [
 		plannedTopics: [
 			{ title: 'Classical DP', status: 'planned' },
 			{ title: 'Interval DP', status: 'planned' },
-			{ title: 'Knuth optimization', status: 'planned' },
-			{ title: 'Aliens trick / Lagrangian relaxation', status: 'planned' },
 			{ title: 'Subset convolution', status: 'outline' },
 			{ title: 'Slope trick', status: 'outline' },
 		],
@@ -134,12 +131,10 @@ const CATEGORY_DEFINITIONS = [
 		longDescription:
 			'These notes emphasize the parts of number theory that become algorithms rather than standalone proofs.',
 		plannedTopics: [
-			{ title: 'Modular arithmetic', status: 'planned' },
-			{ title: 'Mobius function', status: 'planned' },
 			{ title: 'Inclusion-exclusion', status: 'planned' },
-			{ title: 'Primitive roots', status: 'outline' },
-			{ title: 'Discrete logarithm', status: 'outline' },
 			{ title: 'Garner algorithm', status: 'outline' },
+			{ title: 'Multiplicative functions', status: 'outline' },
+			{ title: 'Berlekamp-Massey', status: 'outline' },
 		],
 	},
 	{
@@ -150,7 +145,7 @@ const CATEGORY_DEFINITIONS = [
 			'String problems are often bookkeeping problems in disguise. The goal is to keep the invariant small enough to update in linear time.',
 		plannedTopics: [
 			{ title: 'Palindromic tree', status: 'planned' },
-			{ title: 'Manacher', status: 'outline' },
+			{ title: 'Suffix tree', status: 'outline' },
 		],
 	},
 	{
@@ -160,8 +155,6 @@ const CATEGORY_DEFINITIONS = [
 		longDescription:
 			'The intended emphasis is contest geometry that survives integer arithmetic, not coordinate-free elegance for its own sake.',
 		plannedTopics: [
-			{ title: 'Rotating calipers', status: 'planned' },
-			{ title: 'Closest pair', status: 'planned' },
 			{ title: 'Half-plane intersection', status: 'planned' },
 			{ title: 'Sweep line', status: 'outline' },
 			{ title: 'KD-tree', status: 'outline' },
@@ -186,11 +179,9 @@ const CATEGORY_DEFINITIONS = [
 			'These topics are the part of competitive programming that is hardest to compress into one sentence but easiest to recognize after enough practice.',
 		plannedTopics: [
 			{ title: 'Divide and conquer on answer', status: 'planned' },
-			{ title: 'Parallel binary search', status: 'planned' },
 			{ title: 'Randomization', status: 'planned' },
 			{ title: 'Amortized analysis', status: 'planned' },
 			{ title: 'Potential method', status: 'planned' },
-			{ title: 'Bitset optimization', status: 'planned' },
 			{ title: 'Parametric search', status: 'planned' },
 		],
 	},

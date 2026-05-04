@@ -23,16 +23,19 @@ on explanations, invariants, use cases, and pitfalls instead of dumping template
 
 \section*{Recommended Learning Path}
 
-If I were revising this section from scratch, I would move in roughly this order:
+If I were revising this section from scratch, I would split it into a few routes instead of pretending there is one
+universal order:
 
 \begin{itemize}
-  \item \textbf{basic building blocks}: Fenwick tree, segment tree, sparse table, DSU, KMP, Dijkstra,
-  \item \textbf{next layer}: lazy segment tree, digit DP, treap, Mo's algorithm,
-  \item \textbf{advanced tree and DP tools}: heavy-light decomposition, convex hull trick, NTT,
-  \item \textbf{expert structures}: splay tree and link-cut tree.
+  \item \textbf{core first}: binary search, prefix sums, sliding window, coordinate compression, Fenwick tree, BFS / DFS,
+  \item \textbf{graph path}: topological sort, Dijkstra, MST, SCC, Euler tour, LCA, tree decompositions,
+  \item \textbf{DP optimization path}: knapsack, tree DP, monotone queue, divide-and-conquer DP, Knuth, convex hull trick, rerooting,
+  \item \textbf{advanced data structures}: segment tree, sparse table, ordered set, Li Chao tree, persistent segment tree, rollback DSU,
+  \item \textbf{number theory path}: extended Euclid, modular arithmetic, CRT, sieve, Mobius, Miller-Rabin, discrete log.
 \end{itemize}
 
-That is not the only valid order, but it keeps the prerequisites fairly natural.
+That is still not the only valid order, but it is closer to how I actually revise: pick a branch, stay inside it long
+enough for the invariants to become familiar, then switch.
 
 \section*{What ``Finished'' Means Here}
 
@@ -43,6 +46,7 @@ A finished note should answer the questions I usually care about when revising:
   \item What invariant is doing the real work?
   \item Which implementation shape is the least fragile under time pressure?
   \item Which edge cases usually break the first version?
+  \item What does a worked contest-style example actually look like?
 \end{itemize}
 
 Some topics are still only planned. They are listed openly as planned instead of pretending that a shallow page

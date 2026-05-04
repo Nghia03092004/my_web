@@ -1,0 +1,7 @@
+{
+  "title": "Monotonic Stack and Queue",
+  "summary": "Maintain candidates in sorted order of value so next-greater and sliding-window extrema can be updated in linear time.",
+  "level": "basic",
+  "tags": ["stack", "deque", "linear time"],
+  "order": 15
+}

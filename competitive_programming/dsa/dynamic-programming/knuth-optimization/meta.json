@@ -1,0 +1,7 @@
+{
+  "title": "Knuth Optimization",
+  "summary": "Speed up interval DP from O(n^3) to O(n^2) when the optimal split points move monotonically.",
+  "level": "advanced",
+  "tags": ["interval dp", "optimization", "monotonicity"],
+  "order": 55
+}

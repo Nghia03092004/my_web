@@ -1,0 +1,7 @@
+{
+  "title": "Modular Arithmetic",
+  "summary": "Keep arithmetic safe under a modulus by tracking the algebraic rules that still survive after reduction.",
+  "level": "basic",
+  "tags": ["mod", "algebra", "implementation"],
+  "order": 15
+}

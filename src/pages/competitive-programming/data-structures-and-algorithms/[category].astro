@@ -36,6 +36,12 @@ const categoryIntro = renderLatexContent(await getDsaCategoryIntroTex(category.s
 	headingDepthOffset: 2,
 	headingSlugPrefix: `dsa-category-${category.slug}`,
 });
+const levelOrder = ['basic', 'intermediate', 'advanced', 'expert'] as const;
+const levelGroups = levelOrder.map((level) => ({
+	level,
+	notes: category.notes.filter((note) => note.level === level),
+}));
+const recommendedOrder = category.notes;
 ---
 
 <BaseLayout title={category.title} description={category.description}>
@@ -57,8 +63,8 @@ const categoryIntro = renderLatexContent(await getDsaCategoryIntroTex(category.s
 				<span>advanced or expert notes</span>
 			</div>
 			<div class="archive-summary__item">
-				<strong>{category.title}</strong>
-				<span>active branch</span>
+				<strong>{category.notes[0]?.level ?? 'planned'}</strong>
+				<span>starting level</span>
 			</div>
 		</div>
 		<div class="chip-row">
@@ -76,6 +82,56 @@ const categoryIntro = renderLatexContent(await getDsaCategoryIntroTex(category.s
 		rawUrl={category.introAssetUrl}
 		usedFallback={categoryIntro.usedFallback}
 	/>
+
+	<section class="section-panel">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Difficulty Bands</span>
+				<h2>How this branch is distributed</h2>
+				<p>The labels are not cosmetic. They are there to signal the amount of prerequisite structure and implementation fragility you should expect before opening the note.</p>
+			</div>
+		</div>
+		<div class="chip-row">
+			{
+				levelGroups.map((group) => (
+					<span class="chip" data-tone={getDsaLevelTone(group.level)}>
+						{group.level}: {group.notes.length}
+					</span>
+				))
+			}
+		</div>
+		<div class="cp-year-grid">
+			{
+				levelGroups
+					.filter((group) => group.notes.length > 0)
+					.map((group) => (
+						<article class="cp-year-card cp-year-card--browse">
+							<div class="cp-year-card__topline">
+								<div>
+									<strong>{group.notes.length}</strong>
+									<span>{group.level}</span>
+								</div>
+								<span class="chip" data-tone={getDsaLevelTone(group.level)}>
+									{group.level}
+								</span>
+							</div>
+							<p class="cp-year-card__summary">
+								{
+									group.level === 'basic'
+										? 'These are the shortest on-ramp notes in this category and the ones most likely to be usable immediately in contest practice.'
+										: group.level === 'intermediate'
+											? 'These notes assume the base routine is already familiar and focus on the first real structural upgrades.'
+											: group.level === 'advanced'
+												? 'These are the notes where proofs, reductions, or implementation details become the main bottleneck.'
+												: 'These are the pointer-heavy or amortized tools that are usually worth revisiting only after the rest of the branch is comfortable.'
+								}
+							</p>
+							<p class="cp-content__notice">{group.notes.map((note) => note.title).join(', ')}</p>
+						</article>
+					))
+			}
+		</div>
+	</section>
 
 	<section class="section-panel section-panel--signal">
 		<div class="section-heading">
@@ -105,12 +161,40 @@ const categoryIntro = renderLatexContent(await getDsaCategoryIntroTex(category.s
 		</div>
 	</section>
 
+	<section class="section-panel section-panel--signal">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Study Order</span>
+				<h2>Recommended order to read this branch</h2>
+				<p>The default order follows each note's dependency weight: early notes establish primitives, later notes reuse them or assume the same invariants without re-explaining them.</p>
+			</div>
+		</div>
+		<div class="signal-grid">
+			{
+				recommendedOrder.map((note, index) => (
+					<a class="signal-card dsa-note-card" data-tone={getDsaLevelTone(note.level)} href={withBase(getDsaRoutePath(note.categorySlug, note.slug))}>
+						<span class="signal-card__index">0{index + 1}</span>
+						<div>
+							<span class="eyebrow">{note.level}</span>
+							<h3>{note.title}</h3>
+							<p>{note.summary}</p>
+						</div>
+						<div class="signal-card__meta">
+							<span class="metric">{note.tags[0] ?? category.title}</span>
+							<span class="metric">{note.tags.slice(1, 3).join(' / ')}</span>
+						</div>
+					</a>
+				))
+			}
+		</div>
+	</section>
+
 	<section class="section-panel">
 		<div class="section-heading">
 			<div>
 				<span class="section-label">Planned topics</span>
 				<h2>Next topics in this branch</h2>
-				<p>These are intentionally listed as planned or outline topics rather than fake-complete pages.</p>
+				<p>These are still intentionally shown as planned or outline topics rather than shallow filler. The branch should feel incomplete in honest places instead of fake-complete everywhere.</p>
 			</div>
 		</div>
 		<div class="chip-row dsa-topic-chip-row">

@@ -1,0 +1,92 @@
+\section*{Overview}
+
+Closest pair is the standard reminder that geometry problems often become about ordering, not formulas. The naive
+\(O(n^2)\) scan compares every pair of points. The divide-and-conquer solution wins by proving that after solving left
+and right halves, only a tiny number of cross-half candidates still matter.
+
+\section*{When to Use It}
+
+Use it when:
+
+\begin{itemize}
+  \item the task asks for the nearest pair under Euclidean distance,
+  \item the points are static,
+  \item \(n^2\) comparisons are too expensive.
+\end{itemize}
+
+\section*{Core Idea}
+
+Sort points by \(x\), split at the middle, solve both halves recursively, and let \(d\) be the better of the two
+distances. Any cross-half answer must lie in the vertical strip of width \(2d\) around the split line.
+
+\section*{Key Insight}
+
+After sorting the strip by \(y\), each point only needs to be checked against a constant number of later points. The
+packing argument is the heart of the algorithm: too many points inside a small \(d \times 2d\) neighborhood would force
+two of them to be closer than \(d\) already.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Given \(n\) watchtowers on a plane, find the squared distance between the two closest towers.
+
+\paragraph{Algorithm outline.}
+
+\begin{itemize}
+  \item Sort once by \(x\).
+  \item Recurse on left and right halves.
+  \item Merge the halves by \(y\).
+  \item Build the strip and check only the next few points in \(y\)-order.
+\end{itemize}
+
+\section*{Correctness Intuition}
+
+The recursive answers handle pairs entirely inside one half. For cross-half pairs, both points must be within distance
+\(d\) of the dividing line; otherwise their \(x\)-difference alone is already too large. Inside the strip, the packing
+bound limits how many candidates each point can have.
+
+\section*{Complexity Analysis}
+
+With the standard merge-by-\(y\) implementation, the recurrence is
+\[
+T(n) = 2T(n/2) + O(n),
+\]
+so the total complexity is \(O(n \log n)\).
+
+\section*{Implementation}
+
+The code keeps points sorted by \(x\), performs the recursive divide-and-conquer, and returns the minimum squared
+distance as a 64-bit integer.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Re-sorting the strip from scratch at every recursion level and losing the \(O(n \log n)\) bound.
+  \item Using floating point even though squared integer distances are enough.
+  \item Forgetting duplicates; the answer can be \(0\).
+  \item Mixing up the strip width when working with squared distances.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Manhattan-metric variants after coordinate transforms.
+  \item Dynamic closest pair, which is a much harder data-structure problem.
+  \item Closest pair in higher dimensions with more expensive constants.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Static Euclidean closest pair.
+  \item Detect duplicates or near-collisions in large point sets.
+  \item Any geometry divide-and-conquer where only a strip of cross-boundary candidates survives.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://cp-algorithms.com/geometry/nearest_points.html}{cp-algorithms: Finding the Nearest Pair of Points}.
+  \item \href{https://usaco.guide/plat/geo-ext}{USACO Guide: Extra Geometry}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+\end{itemize}

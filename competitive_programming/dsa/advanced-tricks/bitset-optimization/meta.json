@@ -1,0 +1,7 @@
+{
+  "title": "Bitset Optimization",
+  "summary": "Use machine-word parallelism to update or compare dozens of boolean states with one operation.",
+  "level": "advanced",
+  "tags": ["bitset", "word parallelism", "optimization"],
+  "order": 50
+}

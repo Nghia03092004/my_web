@@ -1,0 +1,114 @@
+\section*{Overview}
+
+Many contest problems are not fundamentally about geometry or fancy data structures. They are about noticing that all
+important changes happen at a finite set of coordinates. Once those coordinates are sorted, the problem becomes a sweep
+over \emph{events}.
+
+\section*{When to Use It}
+
+This pattern is a good fit when:
+
+\begin{itemize}
+  \item intervals start and end,
+  \item queries ask ``what is active at coordinate \(x\)?'',
+  \item the answer only changes when the sweep line crosses an endpoint, a query point, or another special coordinate.
+\end{itemize}
+
+It is one of the cleanest ways to reduce \(O(nq)\) scans into \(O((n+q)\log(n+q))\) offline processing.
+
+\section*{Core Idea}
+
+Encode each structural change as an event:
+
+\begin{itemize}
+  \item add an interval,
+  \item remove an interval,
+  \item answer a query.
+\end{itemize}
+
+Sort all events by coordinate, decide a tie-breaking order, and maintain the active state while sweeping from left to
+right.
+
+\section*{Key Insight}
+
+The real invariant is not ``where the sweep line is.'' It is ``which objects intersect the current position.'' If that
+active set can be updated locally when crossing one event, then the entire problem becomes a sequence of small changes
+instead of repeated full recomputation.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+You are given closed intervals \([l_i, r_i]\) and query points \(x_j\). For each query, count how many intervals
+contain it.
+
+\paragraph{Why events fit.}
+An interval contributes \(+1\) starting at \(l_i\) and stops contributing after \(r_i\). A query only needs the number
+of intervals that are active exactly at its coordinate.
+
+\paragraph{Algorithm outline.}
+
+\begin{itemize}
+  \item Create events \((l_i, \texttt{add})\), \((r_i, \texttt{remove})\), and \((x_j, \texttt{query})\).
+  \item Sort by coordinate.
+  \item For equal coordinates, process \texttt{add} before \texttt{query} before \texttt{remove} for closed intervals.
+  \item Maintain one integer \texttt{active}.
+\end{itemize}
+
+\section*{Problem Pattern}
+
+This exact structure also appears in:
+
+\begin{itemize}
+  \item maximum overlap of intervals,
+  \item offline stabbing queries,
+  \item rectangle union and line sweeps, after the state becomes richer than one counter,
+  \item counting how many resources are currently occupied.
+\end{itemize}
+
+\section*{Correctness Intuition}
+
+Between two consecutive event coordinates, the active set does not change. So it is enough to update the state only at
+events. The tie-breaking rule is the only place where the interval semantics matter: closed, open, and half-open
+intervals need different ordering.
+
+\section*{Complexity Analysis}
+
+If there are \(E\) total events, sorting costs \(O(E \log E)\) and the sweep is linear after sorting.
+
+\section*{Implementation}
+
+The sample code solves the interval stabbing problem above. The same event representation extends naturally when the
+active state becomes a Fenwick tree, multiset, or segment tree instead of one integer.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Getting tie-breaking wrong at equal coordinates.
+  \item Mixing closed-interval logic with half-open implementation.
+  \item Forgetting that offline event sorting loses the original query order unless IDs are stored.
+  \item Using an event sweep when the hard part is really a graph interaction, not a one-dimensional ordering.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Coordinate compression before the sweep.
+  \item Two-dimensional sweep line with an auxiliary data structure.
+  \item Difference-array interpretation when events only change one counter.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Count interval coverage at query points.
+  \item Find the maximum number of simultaneously active segments.
+  \item Offline process add/remove/query actions sorted by one key.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://usaco.guide/plat/sweep-line}{USACO Guide: Sweep Line}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+  \item \href{https://en.oi-wiki.org/geometry/scanning/}{OI Wiki: Scanning Line}.
+\end{itemize}

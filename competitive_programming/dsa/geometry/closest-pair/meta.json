@@ -1,0 +1,7 @@
+{
+  "title": "Closest Pair",
+  "summary": "Find the nearest pair of points in O(n log n) with divide and conquer and a y-sorted strip check.",
+  "level": "advanced",
+  "tags": ["divide and conquer", "geometry", "nearest pair"],
+  "order": 60
+}

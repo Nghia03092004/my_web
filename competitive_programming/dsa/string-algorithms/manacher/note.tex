@@ -1,0 +1,91 @@
+\section*{Overview}
+
+Manacher's algorithm is the linear-time answer to ``tell me every longest palindrome centered here.'' It replaces the
+naive expand-around-center idea with a moving window that reuses symmetry inside the current rightmost palindrome.
+
+\section*{When to Use It}
+
+Use it when:
+
+\begin{itemize}
+  \item the string is static,
+  \item palindrome centers matter,
+  \item you need longest palindromic substring, all palindromic radii, or many offline palindrome checks.
+\end{itemize}
+
+\section*{Core Idea}
+
+Maintain the rightmost palindrome currently known, with center \(c\) and right boundary \(r\). For a new center \(i\),
+look at its mirror \(j = 2c - i\).
+
+\begin{itemize}
+  \item If \(i < r\), the palindrome radius at \(i\) is at least the mirrored radius clipped by \(r - i\).
+  \item Then extend naively only beyond the current boundary.
+\end{itemize}
+
+This is done separately for odd and even centers.
+
+\section*{Key Insight}
+
+The symmetry reuse is what makes the algorithm linear. Every time the while-loop expands, the global right boundary
+moves right, so the total number of character comparisons outside copied information is only \(O(n)\).
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Given a string \(s\), find the longest palindromic substring and answer whether any chosen center has radius at least
+\(k\).
+
+\paragraph{Why Manacher fits.}
+After one linear pass, you know the maximum odd radius \(d_1[i]\) and even radius \(d_2[i]\) for every center. Longest
+palindrome, counts of centered palindromes, and constant-time checks all fall out of those arrays.
+
+\section*{Correctness Intuition}
+
+Inside the current rightmost palindrome, mirrored positions already tell you a safe lower bound on the new radius. The
+only uncertainty is beyond the right boundary, and every successful expansion pushes that boundary farther right.
+
+\section*{Complexity Analysis}
+
+Both odd and even passes run in \(O(n)\), so the full algorithm is linear.
+
+\section*{Implementation}
+
+The code returns:
+
+\begin{itemize}
+  \item \texttt{odd[i]}: radius of the longest odd palindrome centered at \(i\),
+  \item \texttt{even[i]}: radius of the longest even palindrome centered between \(i-1\) and \(i\).
+\end{itemize}
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Mixing the meaning of odd and even radii.
+  \item Off-by-one mistakes when converting a radius back into substring endpoints.
+  \item Forgetting that the radius counts characters on one side plus the center convention, not the whole length.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Count all palindromic substrings by summing the radii.
+  \item Precompute arrays for constant-time palindrome checks on fixed centers.
+  \item Palindromic tree when insertions or distinct-palindrome bookkeeping are needed instead.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Longest palindromic substring.
+  \item Count palindromic substrings.
+  \item Offline center-based palindrome queries.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://cp-algorithms.com/string/manacher.html}{cp-algorithms: Manacher's Algorithm}.
+  \item \href{https://usaco.guide/adv/string-search}{USACO Guide: String Searching}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+\end{itemize}

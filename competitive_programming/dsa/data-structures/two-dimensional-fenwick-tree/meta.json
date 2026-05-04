@@ -1,0 +1,7 @@
+{
+  "title": "Two-Dimensional Fenwick Tree",
+  "summary": "Extend the Fenwick tree idea to point updates and rectangle sums on a grid.",
+  "level": "intermediate",
+  "tags": ["fenwick tree", "2d", "grid queries"],
+  "order": 18
+}

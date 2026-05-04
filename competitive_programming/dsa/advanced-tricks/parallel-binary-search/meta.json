@@ -1,0 +1,7 @@
+{
+  "title": "Parallel Binary Search",
+  "summary": "Answer many monotone offline queries at once by testing them in batches at shared midpoints.",
+  "level": "advanced",
+  "tags": ["offline", "batching", "monotonicity"],
+  "order": 15
+}

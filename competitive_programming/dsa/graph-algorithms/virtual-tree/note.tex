@@ -1,0 +1,90 @@
+\section*{Overview}
+
+Virtual tree is the standard way to avoid touching an entire tree when a query only mentions a small set of marked
+vertices. It builds the smallest tree that still contains all marked vertices and all paths between them.
+
+\section*{When to Use It}
+
+Use it when:
+
+\begin{itemize}
+  \item the base graph is a tree,
+  \item each query marks a relatively small subset of vertices,
+  \item the needed computation depends only on paths between marked nodes.
+\end{itemize}
+
+\section*{Core Idea}
+
+Take the marked vertices, sort them by Euler-tour entry time, add the LCAs of consecutive marked vertices, sort and
+deduplicate again, then connect them with a stack using ancestor relationships.
+
+The resulting compressed tree has only \(O(k)\) vertices for a query with \(k\) marked nodes.
+
+\section*{Key Insight}
+
+On a tree, the only extra vertices you need are LCAs. Nothing else is necessary to preserve the path structure between
+the marked nodes. That is why the virtual tree stays small.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Each query gives \(k\) special cities in a country road tree. Compute some DP over the union of paths connecting those
+cities, for example the minimum number of checkpoints to separate all special cities from each other.
+
+\paragraph{Why virtual tree fits.}
+The answer only depends on the Steiner tree of the special cities. The virtual tree is exactly that structure in a form
+that is easy to DP over.
+
+\section*{Correctness Intuition}
+
+Sorting by Euler time means ancestor intervals are nested correctly. The stack connects each node to the nearest earlier
+node that is its ancestor in the compressed set, which is exactly the parent it has in the minimal path-preserving tree.
+
+\section*{Complexity Analysis}
+
+If a query marks \(k\) nodes, building the virtual tree costs \(O(k \log k)\) with ordinary sorting, plus \(O(1)\) or
+\(O(\log n)\) per LCA depending on the chosen LCA structure.
+
+\section*{Implementation}
+
+The sample code assumes you already have:
+
+\begin{itemize}
+  \item Euler entry times \texttt{tin},
+  \item an \texttt{lca(u, v)} routine,
+  \item an \texttt{is\_ancestor(u, v)} test.
+\end{itemize}
+
+It returns the compressed node list and the virtual-tree adjacency.
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Forgetting to insert LCAs before building the stack.
+  \item Building edges in the original-tree depth order instead of Euler order.
+  \item Reusing adjacency from one query without clearing it.
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item Weighted virtual edges storing original-tree distance.
+  \item Query-by-query DP on marked nodes.
+  \item Combining with centroid or HLD preprocessing around the base tree.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item DP on marked nodes of a tree.
+  \item Count or optimize over the union of marked-node paths.
+  \item Queries where \(k \ll n\) and the full tree is too expensive per query.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://oiwiki.com/graph/virtual-tree/}{OI Wiki: Virtual Tree}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+  \item \href{https://usaco.guide/plat/VT?lang=cpp}{USACO Guide: Virtual Tree}.
+\end{itemize}

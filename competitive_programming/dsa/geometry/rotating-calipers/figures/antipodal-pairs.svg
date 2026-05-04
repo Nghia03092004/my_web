@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" fill="none">
+  <rect width="960" height="340" rx="28" fill="#fff8ef"/>
+  <path d="M180 250L280 110L470 80L690 125L760 240L600 285L320 290Z" fill="#eaf0dc" stroke="#5d723a" stroke-width="4"/>
+  <circle cx="280" cy="110" r="10" fill="#c25f35"/>
+  <circle cx="760" cy="240" r="10" fill="#0d5c6e"/>
+  <circle cx="470" cy="80" r="10" fill="#c25f35"/>
+  <circle cx="600" cy="285" r="10" fill="#0d5c6e"/>
+  <line x1="280" y1="110" x2="760" y2="240" stroke="#913914" stroke-width="4"/>
+  <line x1="470" y1="80" x2="600" y2="285" stroke="#0d5c6e" stroke-width="4" stroke-dasharray="10 8"/>
+  <g font-family="Space Grotesk, sans-serif" font-size="20" fill="#5e5348">
+    <text x="120" y="55">edge pointer advances once around the hull</text>
+    <text x="560" y="62">opposite point only moves forward</text>
+    <text x="700" y="315">antipodal pair</text>
+  </g>
+</svg>

@@ -1,0 +1,100 @@
+\section*{Overview}
+
+Primitive roots and discrete logarithms are two sides of the same idea: if a multiplicative modular group is cyclic,
+then every non-zero element can be represented as a power of one generator. That turns multiplication into addition on
+exponents.
+
+\section*{When to Use It}
+
+Use these ideas when:
+
+\begin{itemize}
+  \item the problem has equations like \(a^x \equiv b \pmod m\),
+  \item you need to enumerate powers by generator order,
+  \item a multiplicative subgroup needs to be indexed explicitly.
+\end{itemize}
+
+\section*{Core Idea}
+
+For a prime modulus \(p\), the non-zero residues form a cyclic group of size \(p-1\). If \(g\) is a primitive root
+modulo \(p\), then every non-zero residue is \(g^k\) for some \(k\).
+
+The discrete logarithm problem asks to recover \(k\) from
+\[
+g^k \equiv h \pmod p.
+\]
+The standard contest algorithm is baby-step giant-step.
+
+\section*{Key Insight}
+
+Once a generator exists, multiplicative equations become additive equations on exponents modulo the group order. The
+hard part shifts from algebra to fast lookup of powers.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+For a prime \(p\), given \(g\) and \(h\), find the smallest non-negative \(x\) such that
+\[
+g^x \equiv h \pmod p,
+\]
+or report that no such \(x\) exists.
+
+\paragraph{Why these tools fit.}
+If \(g\) generates the relevant subgroup, the problem is exactly a discrete logarithm. Baby-step giant-step rewrites
+\(x = iq + j\) and matches
+\[
+g^{iq} \equiv h g^{-j}.
+\]
+
+\section*{Correctness Intuition}
+
+Baby-step giant-step covers every exponent by splitting it into a large-block index \(i\) and a small offset \(j\). A
+hash table over one side and a linear scan over the other finds the match in \(O(\sqrt{m})\) time.
+
+\section*{Complexity Analysis}
+
+\begin{itemize}
+  \item primitive root modulo prime \(p\): factor \(p-1\), then test candidates in roughly \(O(\tau(p-1)\log p)\),
+  \item baby-step giant-step: \(O(\sqrt{m}\log m)\) time and \(O(\sqrt{m})\) memory.
+\end{itemize}
+
+\section*{Implementation}
+
+The code includes:
+
+\begin{itemize}
+  \item \texttt{primitive\_root\_prime(p)} for prime moduli,
+  \item \texttt{discrete\_log\_prime(g, h, p)} with baby-step giant-step.
+\end{itemize}
+
+\section*{Common Pitfalls}
+
+\begin{itemize}
+  \item Forgetting the primitive-root existence conditions for general composite moduli.
+  \item Calling BSGS when \(g\) and \(p\) are not coprime in the implemented variant.
+  \item Ignoring subgroup issues; not every \(h\) is reachable from every \(g\).
+\end{itemize}
+
+\section*{Variants / Extensions}
+
+\begin{itemize}
+  \item General discrete log with gcd handling.
+  \item Using exponent indices to solve multiplicative congruences.
+  \item Primitive roots for NTT-friendly moduli and subgroup generators.
+\end{itemize}
+
+\section*{Practice Problems}
+
+\begin{itemize}
+  \item Solve \(a^x \equiv b \pmod p\).
+  \item Find a generator of \((\mathbb{Z}/p\mathbb{Z})^\times\).
+  \item Transform multiplicative constraints into additive ones over exponents.
+\end{itemize}
+
+\section*{References}
+
+\begin{itemize}
+  \item \href{https://cp-algorithms.com/algebra/discrete-log.html}{cp-algorithms: Discrete Logarithm}.
+  \item \href{https://cp-algorithms.com/algebra/primitive-root.html}{cp-algorithms: Primitive Root}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+\end{itemize}

@@ -1,63 +1,61 @@
 \section*{Overview}
 
-Rollback DSU is the union-find structure I want when connectivity changes over time but the solution can be processed
-offline. The ordinary DSU is great at merging components, but it cannot undo path compression. Rollback DSU fixes that
-by giving up path compression and recording enough information to reverse each merge.
+Rollback DSU is the union-find structure for offline dynamic connectivity and other reversible merge problems. It keeps
+union by size or rank, but deliberately gives up path compression so that every merge can be undone exactly.
 
 \section*{When to Use It}
 
-Use rollback DSU when:
+Use it when:
 
 \begin{itemize}
   \item unions need to be undone later,
-  \item the problem is offline, often over a segment tree on time,
-  \item connectivity or component data changes across intervals of activity.
+  \item the problem is offline,
+  \item the solution explores a recursion tree over time intervals, query blocks, or divide-and-conquer branches.
 \end{itemize}
-
-The standard use case is offline dynamic connectivity: edges appear and disappear over time, and queries ask whether
-vertices are connected at specific moments.
 
 \section*{Core Idea}
 
-Keep union by size or rank, but avoid path compression. Every successful merge pushes enough information onto a stack to
-restore the previous parents, sizes, and component count.
+Every successful merge changes only a constant amount of state:
 
-Then the structure supports:
 \begin{itemize}
-  \item \texttt{snapshot()}: remember the current stack size,
-  \item \texttt{rollback(s)}: undo everything after that snapshot.
+  \item one parent pointer,
+  \item one size or rank value,
+  \item optionally one component counter or other component metadata.
 \end{itemize}
+
+Store those old values on a stack. A rollback simply pops and restores them.
 
 \section*{Key Insight}
 
-Rollback only works cleanly because the parent pointers change in a controlled way. Path compression changes many nodes
-at once and makes undo bookkeeping too expensive, so rollback DSU intentionally uses a slightly slower but reversible
-\texttt{find}.
+Path compression is the part that makes ordinary DSU hard to undo. It changes many parents at once. Rollback DSU avoids
+that entire problem by keeping \texttt{find} reversible.
 
-\section*{Operations / Main Technique}
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Edges of a graph are added and removed over time. For many time points, answer whether two vertices are connected.
+
+\paragraph{Why rollback fits.}
+The standard offline reduction places each edge on the segment tree over the time interval where that edge is active.
+During the segment-tree DFS:
 
 \begin{itemize}
-  \item \texttt{find} without compression,
-  \item \texttt{unite} with union by size,
-  \item store each successful merge on a history stack,
-  \item restore by popping the stack.
+  \item entering a node means applying all edges active on that whole interval,
+  \item leaving the node means undoing those merges.
 \end{itemize}
-
-\paragraph{Worked example.}
-If I merge components of sizes \(3\) and \(5\), I only need to remember which root became the child and what the old
-size of the larger root was. Undoing the merge restores those two values and increments the component count.
 
 \section*{Correctness Intuition}
 
-Each successful union changes only a constant amount of state: one parent pointer, one size entry, and the number of
-components. Because those exact old values are stored, rollback restores the DSU to a previous valid state exactly.
+If you take a snapshot before entering one recursion branch and roll back when leaving it, then every branch sees the
+exact DSU state corresponding to its own active edges. Because each merge records the precise state it overwrote,
+rollback restores a valid earlier DSU state exactly.
 
 \section*{Complexity Analysis}
 
 \begin{itemize}
   \item \texttt{find}: \(O(\log n)\) amortized with union by size,
   \item \texttt{unite}: \(O(\log n)\),
-  \item \texttt{rollback}: \(O(1)\) per undone merge,
+  \item one rollback step: \(O(1)\),
   \item memory: \(O(n + \text{number of successful merges})\).
 \end{itemize}
 
@@ -73,37 +71,35 @@ The code exposes:
   \item \texttt{rollback}.
 \end{itemize}
 
-That is the core I would plug into a segment-tree-over-time solution.
-
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Accidentally adding path compression and breaking rollback.
-  \item Forgetting to record failed merges distinctly from successful ones.
-  \item Rolling back to the wrong snapshot boundary inside recursion.
-  \item Assuming rollback DSU is a drop-in replacement for online dynamic connectivity.
+  \item Adding path compression and destroying reversibility.
+  \item Forgetting that failed merges still affect recursion logic if you do not record them consistently.
+  \item Rolling back to the wrong snapshot boundary in a recursive solver.
+  \item Treating rollback DSU as if it solved online edge deletions by itself.
 \end{itemize}
 
 \section*{Variants / Extensions}
 
 \begin{itemize}
-  \item Component metadata such as sum, parity, or bipartite flags with rollback support.
-  \item Segment tree over time for edge-activity intervals.
-  \item Persistent DSU, which is a different design with stronger version access.
+  \item Rollback DSU with component sums, parity, or bipartite flags.
+  \item Segment tree over time for dynamic connectivity.
+  \item Persistent DSU, which gives version access rather than explicit undo.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
-  \item Offline dynamic connectivity with add, remove, and connectivity queries.
-  \item Bipartite checking under interval-active edges.
-  \item Time-segment recursion where each branch needs a reversible DSU state.
+  \item Offline dynamic connectivity.
+  \item Bipartiteness under interval-active edges.
+  \item Any divide-and-conquer over time where merges must be reversible.
 \end{itemize}
 
 \section*{References}
 
 \begin{itemize}
   \item \href{https://cp-algorithms.com/data_structures/deleting_in_log_n.html}{cp-algorithms: Deleting from a Data Structure in \(O(T(n)\log n)\)}.
-  \item \href{https://codeforces.com/catalog?locale=en}{Codeforces Catalog}.
   \item \href{https://github.com/kth-competitive-programming/kactl}{KACTL}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
 \end{itemize}
