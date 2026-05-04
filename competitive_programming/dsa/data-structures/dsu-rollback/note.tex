@@ -1,99 +1,151 @@
 \section*{Overview}
 
-Rollback DSU is the union-find structure for offline dynamic connectivity and other reversible merge problems. It keeps
-union by size or rank, but deliberately gives up path compression so that every merge can be undone exactly.
+Rollback DSU is the union-find structure for offline problems where merges must be undone later. The central design
+choice is deliberate:
 
-\section*{When to Use It}
+\begin{quote}
+Give up path compression so every merge changes only a constant amount of reversible state.
+\end{quote}
 
-Use it when:
+\section*{Problem-Driven Motivation}
+
+The canonical contest setting is dynamic connectivity:
 
 \begin{itemize}
-  \item unions need to be undone later,
+  \item edges are added and removed over time,
+  \item connectivity queries ask about specific times,
+  \item the online fully dynamic problem is hard, but the full event list is known offline.
+\end{itemize}
+
+Ordinary DSU handles edge additions perfectly, but once an edge becomes inactive, ordinary DSU has no clean undo. The
+rollback version is built specifically for the offline divide-and-conquer or segment-tree-over-time reduction.
+
+\section*{Recognition Pattern}
+
+Rollback DSU is a strong fit when:
+
+\begin{itemize}
+  \item unions must later be undone,
   \item the problem is offline,
-  \item the solution explores a recursion tree over time intervals, query blocks, or divide-and-conquer branches.
+  \item recursion branches or time intervals each need their own reversible DSU state.
 \end{itemize}
 
-\section*{Core Idea}
-
-Every successful merge changes only a constant amount of state:
+Typical signals are:
 
 \begin{itemize}
-  \item one parent pointer,
-  \item one size or rank value,
-  \item optionally one component counter or other component metadata.
+  \item offline dynamic connectivity,
+  \item ``apply these changes on an interval, recurse, then undo'',
+  \item component data that evolves over a segment tree on time.
 \end{itemize}
 
-Store those old values on a stack. A rollback simply pops and restores them.
+\section*{Derivation}
 
-\section*{Key Insight}
+Ordinary DSU is fast because of path compression, but path compression is also exactly what makes undo hard: it changes
+many parent pointers at once.
 
-Path compression is the part that makes ordinary DSU hard to undo. It changes many parents at once. Rollback DSU avoids
-that entire problem by keeping \texttt{find} reversible.
+So rollback DSU uses:
+
+\begin{itemize}
+  \item union by size or rank,
+  \item no path compression,
+  \item a history stack recording the old state of every successful merge.
+\end{itemize}
+
+Each successful union changes only:
+
+\begin{itemize}
+  \item one child's parent,
+  \item one root's size,
+  \item optionally the component counter.
+\end{itemize}
+
+That is a constant-sized record, so rollback is simply popping history entries until a saved snapshot size is restored.
 
 \section*{Worked Problem}
 
 \paragraph{Problem.}
-Edges of a graph are added and removed over time. For many time points, answer whether two vertices are connected.
+Edges are active on time intervals. For many time points, answer whether two vertices are connected.
 
-\paragraph{Why rollback fits.}
-The standard offline reduction places each edge on the segment tree over the time interval where that edge is active.
-During the segment-tree DFS:
+\paragraph{Why naive fails.}
+Rebuilding the graph and recomputing connectivity from scratch at every time point is far too slow.
+
+\paragraph{Offline reduction.}
+Build a segment tree over time. If edge \(e\) is active on interval \([l,r]\), attach \(e\) to all segment-tree nodes
+whose time segments lie fully inside \([l,r]\).
+
+\paragraph{DFS over time.}
+At one segment-tree node:
 
 \begin{itemize}
-  \item entering a node means applying all edges active on that whole interval,
-  \item leaving the node means undoing those merges.
+  \item take a snapshot of the DSU history size,
+  \item unite all edges stored at that node,
+  \item recurse to children,
+  \item roll back to the snapshot before returning.
 \end{itemize}
+
+\paragraph{Why this works.}
+Every recursion path corresponds to one time point. Along that path, exactly the edges active at that time have been
+merged into the DSU.
+
+\section*{Implementation Reasoning}
+
+The rollback interface should stay minimal:
+
+\begin{itemize}
+  \item \texttt{find} without compression,
+  \item \texttt{unite},
+  \item \texttt{snapshot},
+  \item \texttt{rollback(snapshot)}.
+\end{itemize}
+
+The important invariant is:
+
+\begin{quote}
+Rolling back to a snapshot must restore the DSU to exactly the state it had when that snapshot was taken.
+\end{quote}
+
+That is why every successful merge records the overwritten parent, overwritten size, and component-count effect.
 
 \section*{Correctness Intuition}
 
-If you take a snapshot before entering one recursion branch and roll back when leaving it, then every branch sees the
-exact DSU state corresponding to its own active edges. Because each merge records the precise state it overwrote,
-rollback restores a valid earlier DSU state exactly.
+On the segment tree over time, entering a node means ``all edges attached here are active for every time in this whole
+interval.'' So it is safe to merge them before recursion. Rolling back after finishing that interval ensures sibling
+intervals do not inherit merges that should not exist there.
 
 \section*{Complexity Analysis}
 
+With union by size and no path compression:
+
 \begin{itemize}
-  \item \texttt{find}: \(O(\log n)\) amortized with union by size,
+  \item \texttt{find}: \(O(\log n)\) worst case,
   \item \texttt{unite}: \(O(\log n)\),
-  \item one rollback step: \(O(1)\),
+  \item rollback of one merge: \(O(1)\),
   \item memory: \(O(n + \text{number of successful merges})\).
-\end{itemize}
-
-\section*{Implementation}
-
-The code exposes:
-
-\begin{itemize}
-  \item \texttt{find},
-  \item \texttt{unite},
-  \item \texttt{same},
-  \item \texttt{snapshot},
-  \item \texttt{rollback}.
 \end{itemize}
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
   \item Adding path compression and destroying reversibility.
-  \item Forgetting that failed merges still affect recursion logic if you do not record them consistently.
-  \item Rolling back to the wrong snapshot boundary in a recursive solver.
-  \item Treating rollback DSU as if it solved online edge deletions by itself.
+  \item Forgetting to take the snapshot before applying the interval's merges.
+  \item Recording too little history to restore the old state exactly.
+  \item Using rollback DSU on an online deletion problem where the full event timeline is not known.
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Rollback DSU with component sums, parity, or bipartite flags.
-  \item Segment tree over time for dynamic connectivity.
-  \item Persistent DSU, which gives version access rather than explicit undo.
+  \item Additional component metadata such as parity or sums can be rolled back too.
+  \item Persistent DSU is a different idea: version access instead of explicit undo.
+  \item If the problem needs online edge deletions, rollback alone is not enough.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
   \item Offline dynamic connectivity.
-  \item Bipartiteness under interval-active edges.
-  \item Any divide-and-conquer over time where merges must be reversible.
+  \item Offline bipartiteness under interval-active edges.
+  \item Divide-and-conquer-over-time problems with reversible component merges.
 \end{itemize}
 
 \section*{References}

@@ -1,87 +1,136 @@
 \section*{Overview}
 
-Rerooting DP is the pattern for ``compute the same tree answer for every possible root.'' Instead of rebuilding the tree
-DP from scratch \(n\) times, it uses one pass for subtree information and one pass for the contribution coming from the
-parent side.
-
-\section*{When to Use It}
-
-Use it when:
+Rerooting DP is the pattern for ``compute the tree answer for every possible root.'' The technique is not about a
+particular formula. It is about splitting the answer at each node into:
 
 \begin{itemize}
-  \item the answer is wanted at every vertex,
-  \item the rooted answer can be decomposed into child contributions plus one parent-side contribution,
-  \item moving the root across one edge can be described locally.
+  \item what comes from its children,
+  \item what comes from the rest of the tree.
 \end{itemize}
 
-\section*{Core Idea}
+\section*{Problem-Driven Motivation}
 
-Do two traversals:
+Many tree problems are easy for one fixed root and hard for all roots. A naive approach recomputes the whole DP
+\(n\) times, which turns an \(O(n)\) tree DP into \(O(n^2)\).
+
+The optimization comes from noticing that moving the root across one edge only changes the answer locally. If that local
+change can be described by a transition formula, then all-root answers become a two-pass DP instead of \(n\) separate
+DFS runs.
+
+\section*{Recognition Pattern}
+
+Rerooting is usually the right tool when:
 
 \begin{itemize}
-  \item a downward pass computing ordinary subtree DP,
-  \item an upward pass telling each child what the rest of the tree contributes once that child becomes the root.
+  \item the answer is required for every vertex,
+  \item the one-root version is already a standard tree DP,
+  \item a child's answer should be derivable from the parent's answer by removing one contribution and adding another.
 \end{itemize}
 
-\section*{Key Insight}
+Strong signals are:
 
-The hard part is not the second DFS itself. It is designing a state that can be transferred across an edge after removing
-the child's own contribution and adding the parent-side contribution.
+\begin{itemize}
+  \item sum of distances from every node,
+  \item best root under some subtree-merge score,
+  \item ``solve for all roots'' wording in editorial discussions.
+\end{itemize}
+
+\section*{Derivation}
+
+The usual derivation has two phases.
+
+\paragraph{Downward phase.}
+Compute a standard subtree DP:
+
+\begin{itemize}
+  \item subtree sizes,
+  \item subtree sums,
+  \item or any child-merge information needed by the final answer.
+\end{itemize}
+
+\paragraph{Upward / reroot phase.}
+Now imagine moving the root from parent \(v\) to child \(to\). If we can express the new answer at \(to\) using the old
+answer at \(v\), then one DFS over edges propagates all answers.
+
+This is the key conceptual move:
+
+\begin{quote}
+The child needs the contribution of ``everything except its own subtree.''
+\end{quote}
+
+For more complex merges, that contribution is often built with prefix/suffix aggregates over the children.
 
 \section*{Worked Problem}
 
 \paragraph{Problem.}
-For every vertex \(v\) in a tree, compute the sum of distances from \(v\) to all other vertices.
+For every node \(v\), compute the sum of distances from \(v\) to all other nodes.
 
-\paragraph{First pass.}
-For each node:
-
-\begin{itemize}
-  \item \texttt{sub\_size[v]} = size of the subtree,
-  \item \texttt{down[v]} = sum of distances from \(v\) to nodes in its subtree.
-\end{itemize}
-
-\paragraph{Transfer formula.}
-If \(to\) is a child of \(v\), then rerooting from \(v\) to \(to\) changes the answer by:
+\paragraph{Step 1: subtree pass.}
+For each node \(v\):
 
 \begin{itemize}
-  \item subtract \(\texttt{sub\_size[to]}\), because those nodes become one step closer,
-  \item add \(n - \texttt{sub\_size[to]}\), because all other nodes become one step farther.
+  \item \(\texttt{sub\_size[v]}\) = number of nodes in its subtree,
+  \item \(\texttt{down[v]}\) = sum of distances from \(v\) to all nodes in its subtree.
 \end{itemize}
 
-So:
+\paragraph{Step 2: root answer.}
+At the initial root, \(\texttt{answer[root]} = down[root]\).
+
+\paragraph{Step 3: reroot across one edge.}
+If \(to\) is a child of \(v\), moving the root from \(v\) to \(to\):
+
+\begin{itemize}
+  \item decreases distance to each node in \(to\)'s subtree by \(1\),
+  \item increases distance to every other node by \(1\).
+\end{itemize}
+
+Therefore
 \[
-ans[to] = ans[v] - sub\_size[to] + (n - sub\_size[to]).
+answer[to] = answer[v] - sub\_size[to] + (n - sub\_size[to]).
 \]
+
+\paragraph{Why this is enough.}
+That formula gives each child's full-tree answer from its parent's full-tree answer in \(O(1)\), so one second DFS
+propagates everything.
+
+\section*{Implementation Reasoning}
+
+The important implementation question is not ``how do I run two DFS passes?'' It is ``what state is strong enough to
+transfer?''
+
+For the sum-of-distances problem:
+
+\begin{itemize}
+  \item \(\texttt{sub\_size}\) is needed because rerooting changes distances for an entire subtree at once,
+  \item \(\texttt{down}\) gives the base answer at the initial root,
+  \item \(\texttt{answer}\) stores the full result after rerooting.
+\end{itemize}
+
+The code keeps the example intentionally direct because this is the cleanest rerooting entry point.
 
 \section*{Correctness Intuition}
 
-The first pass is ordinary tree DP. The second pass is correct because every node outside the child's subtree changes
-distance by \(+1\), and every node inside changes by \(-1\). Those are the only two cases.
+The first DFS is ordinary tree DP. The second DFS is correct because every node in the tree is either inside the moved
+child's subtree or outside it, and those are exactly the two distance-change cases captured by the reroot formula.
 
 \section*{Complexity Analysis}
 
-When each edge transfer is \(O(1)\), rerooting runs in \(O(n)\).
-
-\section*{Implementation}
-
-The code solves the sum-of-distances example, which is a good baseline because the transfer formula is easy to inspect
-and verify.
+If each edge transfer is \(O(1)\), rerooting runs in \(O(n)\) total time and \(O(n)\) memory.
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Passing a child its own contribution again by mistake.
-  \item Designing a state that is enough for one root but not enough to transfer.
-  \item Recomputing sibling merges from scratch instead of deriving them with prefix/suffix or a direct formula.
+  \item Designing a state that is enough for one root but too weak to transfer to children.
+  \item Double-counting the child's own contribution when sending parent-side information downward.
+  \item Recomputing sibling merges from scratch instead of deriving them algebraically or with prefix/suffix arrays.
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Maximum or minimum score over all roots.
-  \item Prefix-suffix rerooting when a child needs the merge of all other children.
-  \item Generic rerooting frameworks with custom combine and lift operators.
+  \item Prefix-suffix rerooting handles child merges where one child needs ``all other children combined.''
+  \item Maximum/minimum-distance style rerooting often uses top-two child contributions.
+  \item If the answer is not transferable across one edge by a small state, rerooting may be the wrong abstraction.
 \end{itemize}
 
 \section*{Practice Problems}
@@ -89,7 +138,7 @@ and verify.
 \begin{itemize}
   \item Sum of distances from every node.
   \item Best root under a subtree-based score.
-  \item Count rooted structures for every root.
+  \item Generic ``all roots'' tree DP problems.
 \end{itemize}
 
 \section*{References}

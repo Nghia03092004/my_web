@@ -1,101 +1,189 @@
 \section*{Overview}
 
-Li Chao tree is the structure I use when the convex hull trick is conceptually right but the nice monotone assumptions
-are gone. It stores a dynamic set of lines and answers ``which line is best at \(x\)?'' queries in logarithmic time on
-a fixed coordinate domain.
+Li Chao tree is the line-container I use when a DP or query problem reduces to
+\[
+\min_j (m_j x + b_j)
+\]
+or \(\max\) instead, but the pleasant monotonicity assumptions behind the deque version of the convex hull trick are
+missing. It gives a robust contest implementation for arbitrary line insertion order and arbitrary query order.
 
-\section*{When to Use It}
+\section*{Problem-Driven Motivation}
 
-Use a Li Chao tree when:
+A very common contest transition looks like this:
+\[
+dp[i] = cost(i) + \min_{j < i}\bigl(A_j \cdot X_i + B_j\bigr).
+\]
 
-\begin{itemize}
-  \item the recurrence or query is of the form \(\min (mx + b)\) or \(\max (mx + b)\),
-  \item line insertion order is arbitrary,
-  \item query \(x\)-values are arbitrary,
-  \item the coordinate domain can be bounded in advance or compressed offline.
-\end{itemize}
+The naive implementation tries every previous \(j\), so it is \(O(n^2)\). That dies immediately when \(n\) is
+\(2 \cdot 10^5\).
 
-It is the standard fallback when the monotone deque version of the convex hull trick is not legal.
-
-\section*{Core Idea}
-
-Each node of the segment tree owns an interval of \(x\)-values and stores one candidate line. When a new line is
-inserted, compare it with the stored line at the midpoint:
+If both slopes \(A_j\) and query points \(X_i\) are monotone, a deque-based convex hull trick is enough. But many real
+problems break one or both assumptions:
 
 \begin{itemize}
-  \item the better line at the midpoint stays in the current node,
-  \item the worse line is pushed into the half-interval where it might still win.
+  \item the \(x\)-coordinates come in arbitrary order,
+  \item the states that generate lines are not sorted by slope,
+  \item queries and insertions are interleaved online.
 \end{itemize}
+
+That is the point where Li Chao tree becomes the safe fallback.
+
+\section*{Recognition Pattern}
+
+Strong signals for Li Chao tree are:
+
+\begin{itemize}
+  \item a recurrence or query of the form ``minimum / maximum over lines evaluated at one \(x\),''
+  \item arbitrary query order, arbitrary line insertion order, or both,
+  \item a value domain that can be bounded in advance or compressed offline,
+  \item the monotone CHT looks almost right but one monotonicity assumption is false.
+\end{itemize}
+
+If the compared functions are not lines, or if two functions can intersect many times, Li Chao is probably the wrong
+tool.
+
+\section*{Derivation}
+
+Suppose every candidate state contributes one line \(y = mx + b\), and every new state asks for the best value at one
+query point \(x\). The remaining task is:
+
+\begin{quote}
+Maintain the lower envelope of inserted lines and query it at points.
+\end{quote}
+
+The Li Chao idea is to put a segment-tree structure on the \(x\)-domain. Each node owns an interval \([l,r]\) and stores
+one currently best candidate line for that interval.
+
+The crucial observation is that two lines intersect at most once. So if we compare two lines on an interval and one of
+them is better at the midpoint, then the worse line can only still matter on \emph{one side} of that midpoint.
 
 \includegraphics[width=\textwidth]{figures/query-partition.svg}
 
-\section*{Key Insight}
-
-Two lines intersect at most once. That means if one line is better than another at the midpoint, the only place where
-the other line can still matter is on one side of that midpoint. The insert step exploits exactly that one-crossing
-property.
-
-\section*{Operations / Main Technique}
+That leads to the insertion rule:
 
 \begin{itemize}
-  \item insert one line,
-  \item query the minimum or maximum value at one \(x\),
-  \item optionally compress \(x\)-coordinates first if only a known query set matters.
+  \item keep the better line at the midpoint in the current node,
+  \item recurse with the other line only into the side where it could still win.
 \end{itemize}
 
-\paragraph{Worked example.}
-Suppose a node covers \([0, 8]\) with midpoint \(4\). If the existing line is better at \(4\) but the new line is
-better at \(8\), the new line only needs to recurse into the right half. The left half is already safe.
+This is why Li Chao stays logarithmic: every insertion follows only one path downward after each comparison.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Given arbitrary integers \(x_0, x_1, \dots, x_{n-1}\), compute
+\[
+dp[0] = 0,\qquad
+dp[i] = x_i^2 + C + \min_{0 \le j < i}\bigl(dp[j] + x_j^2 - 2x_i x_j\bigr).
+\]
+
+\paragraph{Why the naive solution fails.}
+Trying all \(j < i\) for every \(i\) is \(O(n^2)\). For \(n = 2 \cdot 10^5\), that is far too slow.
+
+\paragraph{How the formula becomes lines.}
+For fixed \(j\), the part depending on \(x_i\) is
+\[
+(-2x_j)\cdot x_i + (dp[j] + x_j^2).
+\]
+
+So each previous state contributes a line with:
+
+\begin{itemize}
+  \item slope \(m_j = -2x_j\),
+  \item intercept \(b_j = dp[j] + x_j^2\),
+  \item query point \(x = x_i\).
+\end{itemize}
+
+Then
+\[
+dp[i] = x_i^2 + C + \min_j (m_j x_i + b_j).
+\]
+
+\paragraph{Why Li Chao, not monotone CHT.}
+The \(x_i\) values may arrive in any order, so front-popping from a deque is illegal. The slopes
+\(-2x_j\) are also unsorted if the \(x_j\) values are unsorted. That rules out the monotone hull but not Li Chao.
+
+\paragraph{Final algorithm.}
+
+\begin{itemize}
+  \item bound the queried \(x_i\) values by \([\min x_i, \max x_i]\),
+  \item insert the line for state \(0\),
+  \item for \(i = 1 \ldots n-1\), query the best line at \(x_i\), compute \(dp[i]\), then insert the line generated by
+  state \(i\).
+\end{itemize}
+
+\section*{Implementation Reasoning}
+
+The invariant I want from the implementation is:
+
+\begin{quote}
+For every coordinate \(x\), at least one line on the root-to-leaf path for \(x\) is optimal among all inserted lines.
+\end{quote}
+
+That is why queries simply evaluate every stored line on that path and take the best.
+
+Practical implementation details:
+
+\begin{itemize}
+  \item use \texttt{\_\_int128} for comparisons, because \(mx+b\) can overflow 64-bit during intermediate arithmetic,
+  \item handle equal slopes carefully: for a minimum hull, keep only the smaller intercept,
+  \item if the domain is sparse but all query points are known offline, compress the coordinates and build Li Chao over
+  compressed positions.
+\end{itemize}
+
+The code keeps a dynamic-node tree because it is memory-friendly when the coordinate domain is large but only a small
+part of it is touched.
 
 \section*{Correctness Intuition}
 
-For every \(x\), at least one line on the root-to-leaf path is optimal at that \(x\). Insertions preserve that
-invariant because the current node always keeps a line that wins at the midpoint, and the losing line is only sent into
-the side where an intersection could still make it relevant.
+Inside one node interval, the kept line is the one that wins at the midpoint. Since two lines intersect at most once,
+the line that loses at the midpoint can only still become relevant on one side. Recursing only into that side preserves
+all possible future optima.
+
+Therefore, after every insertion, the optimal line for any queried \(x\) still survives somewhere on the path from the
+root to the leaf containing \(x\).
 
 \section*{Complexity Analysis}
 
 If the domain spans \(X\) discrete coordinates:
+
 \begin{itemize}
-  \item insert: \(O(\log X)\),
-  \item point query: \(O(\log X)\),
-  \item memory: \(O(\text{number of inserted lines} \cdot \log X)\) for the dynamic-node version.
+  \item insert one line: \(O(\log X)\),
+  \item query one point: \(O(\log X)\),
+  \item memory: \(O(\text{insertions} \cdot \log X)\) in the dynamic-node version.
 \end{itemize}
-
-\section*{Implementation}
-
-The code uses a dynamic-node minimum Li Chao tree on integer \(x\)-coordinates. That keeps the memory proportional to
-the parts of the domain that are actually touched.
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Using Li Chao when the functions are not lines or do not have the one-intersection property.
-  \item Picking a domain that does not actually cover all queried \(x\)-values.
-  \item Forgetting that the structure answers point queries, not arbitrary interval minima by itself.
-  \item Overflow in \(mx + b\) when both \(m\) and \(x\) are large.
+  \item Forgetting that Li Chao only supports point queries unless you implement the segment-restricted variant.
+  \item Choosing a coordinate range that misses some query points.
+  \item Using it on functions that are not single-intersection objects.
+  \item Flipping the inequalities incorrectly when switching between minimum and maximum.
+  \item Assuming 64-bit multiplication is safe during comparisons.
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Maximum queries instead of minimum queries.
-  \item Li Chao segment tree with lines active only on subsegments.
-  \item Offline compressed-domain Li Chao when only specific query coordinates matter.
+  \item If slopes and query points are both monotone, deque CHT is simpler and faster.
+  \item If a line is active only on a subsegment of the domain, use the segment-restricted Li Chao variant.
+  \item If the domain is continuous and precision matters, use a floating version carefully.
+  \item If the compared functions intersect multiple times, Li Chao is no longer justified by the midpoint argument.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
-  \item DP recurrences with arbitrary line insertion order.
-  \item Maintain a dynamic lower envelope of linear costs.
-  \item Segment-restricted line insertion after offline event expansion.
+  \item DP with arbitrary-order quadratic transitions.
+  \item Dynamic minimum-cost linear functions evaluated at points.
+  \item Segment-restricted linear cost updates after offline event expansion.
 \end{itemize}
 
 \section*{References}
 
 \begin{itemize}
   \item \href{https://cp-algorithms.com/geometry/convex_hull_trick.html}{cp-algorithms: Convex Hull Trick and Li Chao Tree}.
-  \item \href{https://codeforces.com/catalog?locale=en}{Codeforces Catalog}.
   \item \href{https://github.com/kth-competitive-programming/kactl}{KACTL}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
 \end{itemize}

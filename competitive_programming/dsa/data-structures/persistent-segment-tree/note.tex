@@ -1,100 +1,136 @@
 \section*{Overview}
 
-Persistent segment tree is the structure for ``keep every past version.'' Instead of mutating one segment tree in place,
-every point update creates a new root and only clones the \(O(\log n)\) nodes on the updated path.
+Persistent segment tree is the standard answer to ``keep all past versions.'' The useful mental model is not ``copy the
+tree.'' It is ``copy only the nodes on the updated path and share everything else.''
 
-\section*{When to Use It}
+\section*{Problem-Driven Motivation}
 
-Use it when:
+Many contest problems ask for queries on:
 
 \begin{itemize}
-  \item queries refer to historical versions,
-  \item each update touches one logarithmic root-to-leaf path,
-  \item prefix versions or time-stamped versions make offline processing natural.
+  \item historical array versions,
+  \item every prefix version of an array,
+  \item old and new states interleaved in arbitrary order.
 \end{itemize}
 
-The most common contest uses are prefix frequency trees, k-th order statistics on subarrays, and historical range sums.
+If we literally copy the whole segment tree per update, memory becomes \(O(nq)\). But a point update only affects
+\(O(\log n)\) nodes. That mismatch is exactly where persistence pays off.
 
-\section*{Core Idea}
+\section*{Recognition Pattern}
 
-If one point update only changes the nodes covering that point, then all other nodes are still valid for the new
-version. So copy only the changed path and let the untouched subtrees be shared.
+Persistent segment tree is a strong fit when:
+
+\begin{itemize}
+  \item updates are point updates or otherwise touch only one root-to-leaf path,
+  \item queries refer to old versions,
+  \item prefix versions or time snapshots are natural in the statement,
+  \item an immutable version history is more useful than undo operations.
+\end{itemize}
+
+Typical contest signals are:
+
+\begin{itemize}
+  \item ``query version \(t\),''
+  \item ``k-th smallest on subarray \([l,r]\)'' after building prefix versions,
+  \item ``every update creates a new snapshot.''
+\end{itemize}
+
+\section*{Derivation}
+
+In an ordinary segment tree, one point update changes exactly one root-to-leaf path. Every node outside that path still
+has the correct aggregate.
+
+So for a new version:
+
+\begin{itemize}
+  \item clone the nodes on the updated path,
+  \item reuse all untouched children,
+  \item return the new root pointer or index.
+\end{itemize}
 
 \includegraphics[width=\textwidth]{figures/version-branching.svg}
 
-\section*{Key Insight}
-
-Persistence is cheap here because immutability and segment-tree locality match perfectly. One update affects one path,
-so one version needs only one path of fresh nodes.
+This is called path copying. It is the whole reason persistence is cheap here.
 
 \section*{Worked Problem}
 
 \paragraph{Problem.}
-Maintain an array under point updates. After each update, keep the new array version and answer range-sum queries on any
-past version.
+An array supports point assignments. After every update, keep the new version. Later queries ask for the sum on
+\([l,r]\) in any version.
 
-\paragraph{Why persistence fits.}
-Version \(v_t\) differs from version \(v_{t-1}\) at one position. Therefore only one root-to-leaf path changes.
+\paragraph{Why naive copying fails.}
+Copying the full array or full segment tree after every update is too expensive in both time and memory.
 
-\paragraph{Version view.}
-If update \(t\) changes position \(p\), then:
+\paragraph{How persistence fixes it.}
+If version \(t\) updates position \(p\):
 
 \begin{itemize}
-  \item nodes whose segments do not contain \(p\) are reused,
-  \item nodes whose segments contain \(p\) are cloned and recomputed.
+  \item only the nodes whose segments contain \(p\) are cloned,
+  \item all other subtrees are shared with version \(t-1\).
 \end{itemize}
 
-\section*{Example Problem Pattern}
+\paragraph{Why queries remain correct.}
+Each root identifies one immutable tree whose aggregates match exactly the updates that were applied up to that version.
 
-For k-th smallest queries on subarray \([l,r]\), build one persistent frequency tree per prefix. Then compare version
-roots for prefixes \(r\) and \(l-1\). The difference between those roots acts like the multiset of the subarray.
+\paragraph{More advanced pattern.}
+For k-th smallest on subarray \([l,r]\), build one persistent frequency tree per prefix. The difference between roots
+\(\texttt{root[r]}\) and \(\texttt{root[l-1]}\) behaves like the multiset of the subarray.
+
+\section*{Implementation Reasoning}
+
+The implementation uses an index-based node pool rather than raw pointers. That makes cloning explicit:
+
+\begin{itemize}
+  \item \texttt{clone(node)} copies one old node into the pool,
+  \item the new version root is the index returned by the top-level update,
+  \item a vector of roots stores the full version history.
+\end{itemize}
+
+The invariant is simple:
+
+\begin{quote}
+Once created, a node is never mutated again by a later version unless that version first cloned it.
+\end{quote}
+
+That immutability is exactly what makes sharing safe.
 
 \section*{Correctness Intuition}
 
-Each version root points to a tree whose aggregates reflect exactly the updates that were applied before that version was
-created. Shared nodes are safe because no future operation mutates them; newer versions only allocate new nodes.
+Every version root points to a tree where each segment aggregate was recomputed from the correct children for that
+version. Shared nodes correspond to untouched segments, so their aggregates remain valid. Cloned nodes cover exactly the
+segments whose values changed.
 
 \section*{Complexity Analysis}
 
 \begin{itemize}
   \item one point update: \(O(\log n)\) time and \(O(\log n)\) new nodes,
-  \item one query on a chosen version: \(O(\log n)\),
-  \item memory after \(q\) updates: \(O(n + q \log n)\).
-\end{itemize}
-
-\section*{Implementation}
-
-The sample code uses an index-based node pool and supports:
-
-\begin{itemize}
-  \item build,
-  \item point update returning a new root,
-  \item range-sum query on any root.
+  \item one query on any version: \(O(\log n)\),
+  \item total memory after \(q\) updates: \(O(n + q \log n)\).
 \end{itemize}
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Mutating an old node instead of cloning it.
-  \item Forgetting to store each new root.
-  \item Underestimating memory usage when \(q\) is large.
-  \item Reaching for persistence when simple offline prefix accumulation would already solve the problem.
+  \item Accidentally mutating a shared node instead of cloning it.
+  \item Forgetting to store every returned root.
+  \item Underestimating the node-pool size when \(q\) is large.
+  \item Using persistence when rollback or plain offline prefix processing would be simpler.
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Persistent frequency tree for order statistics.
-  \item Persistent lazy trees, which exist but are much easier to get wrong.
-  \item Other path-copy persistent structures such as treaps.
+  \item Persistent frequency trees are the standard order-statistics application.
+  \item Persistent lazy propagation exists, but the implementation becomes much more fragile.
+  \item If the task needs undo rather than arbitrary access to old versions, rollback structures are often simpler.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
-  \item Historical point updates with range queries on old versions.
-  \item K-th smallest value on subarrays using prefix versions.
-  \item Offline queries where every prefix snapshot must remain accessible.
+  \item Historical point updates with range queries.
+  \item K-th smallest on subarrays using prefix versions.
+  \item Any offline query problem where every prefix snapshot must remain available.
 \end{itemize}
 
 \section*{References}

@@ -1,95 +1,190 @@
 \section*{Overview}
 
-Centroid decomposition is the tree technique I use when path information is global but still structured enough that one
-balanced separator can expose it. It repeatedly splits the tree at a centroid, producing a recursion tree of depth
-\(O(\log n)\).
+Centroid decomposition is the tree technique for problems where the relevant information depends on \emph{paths}, but a
+full all-pairs or all-roots approach is too expensive. The decomposition repeatedly cuts the tree by balanced
+separators, producing a recursion tree of depth \(O(\log n)\).
 
-\section*{When to Use It}
+\section*{Problem-Driven Motivation}
 
-Use centroid decomposition when:
+Imagine a tree with \(n,q \le 2 \cdot 10^5\). Two online operations are supported:
+
+\begin{itemize}
+  \item mark one vertex red,
+  \item query the distance from a vertex \(v\) to the nearest red vertex.
+\end{itemize}
+
+The naive answer for each query is a BFS or DFS from \(v\), which is \(O(n)\) per query. Even rerooting or one fixed
+precomputation does not solve the dynamic update aspect cleanly.
+
+What we need is a way to reduce every query and every update to only \(O(\log n)\) relevant tree nodes. That is exactly
+what the centroid ancestor chain provides.
+
+\section*{Recognition Pattern}
+
+Centroid decomposition is a strong candidate when:
 
 \begin{itemize}
   \item the graph is a tree,
-  \item the query or counting logic depends on paths,
-  \item processing all paths through one special vertex is manageable,
-  \item rerooting or heavy-light decomposition does not match the query pattern directly.
+  \item the property is about whole paths, not only subtrees,
+  \item each query only needs path information aggregated through a few special separators,
+  \item there are many updates and queries, and a full traversal per operation is too slow.
 \end{itemize}
 
-Typical examples include nearest marked node, counting paths with a distance constraint, and subtree-independent path
-aggregation.
+Typical contest signals are:
 
-\section*{Core Idea}
+\begin{itemize}
+  \item nearest active / colored vertex,
+  \item count paths satisfying a distance condition,
+  \item optimize over all paths through a chosen pivot,
+  \item the statement is about a tree, but subtree-only tools like Euler tour or DSU on tree do not quite fit.
+\end{itemize}
 
-A centroid of a tree is a vertex whose removal leaves no component larger than half of the current tree. If I recurse on
-the remaining components after removing that centroid, every original vertex participates in only \(O(\log n)\) levels
-of the decomposition.
+\section*{Derivation}
+
+A centroid of a tree component is a vertex whose removal leaves no remaining component larger than half the size of the
+current component.
+
+Why is this useful?
+
+\begin{itemize}
+  \item If we recurse after removing the centroid, the recursion depth is \(O(\log n)\).
+  \item Every original tree path belongs to exactly one of two categories at each recursive step:
+    \begin{itemize}
+      \item it passes through the current centroid,
+      \item or it lies completely inside one recursive child component.
+    \end{itemize}
+\end{itemize}
+
+So if we can process all paths that pass through the current centroid, recursion handles the rest.
 
 \includegraphics[width=\textwidth]{figures/centroid-layers.svg}
 
-\section*{Key Insight}
-
-Every path in the original tree passes through the centroid of some decomposition component. That is the structural
-reason the method works: if I know how to process all paths passing through the current centroid, recursion takes care of
-the paths that stay entirely inside one child component.
-
-\section*{Operations / Main Technique}
+For dynamic nearest-red queries, the derivation goes further:
 
 \begin{itemize}
-  \item compute subtree sizes,
-  \item find the centroid of the current component,
-  \item process the path information that uses this centroid,
-  \item remove it logically and recurse on each remaining component.
+  \item every node stores the list of centroid ancestors above it,
+  \item for each centroid \(c\), maintain the minimum distance from \(c\) to any red node,
+  \item to query a node \(v\), walk through the centroid ancestors of \(v\) and combine
+  \[
+  dist(v,c) + best[c].
+  \]
 \end{itemize}
 
-\paragraph{Worked example.}
-For nearest-red-node queries, each node stores its chain of centroid ancestors and the distance to each of them. Updating
-one red node touches only those ancestors, and querying another node checks the same ancestor chain.
+This is the entire trick. The balanced recursion makes the ancestor chain logarithmic.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Initially only node \(0\) is red. Support:
+
+\begin{itemize}
+  \item \texttt{paint(v)}: make \(v\) red,
+  \item \texttt{nearest(v)}: return distance from \(v\) to the nearest red node.
+\end{itemize}
+
+\paragraph{Why naive fails.}
+With \(2 \cdot 10^5\) operations, \(O(n)\) BFS per query is impossible.
+
+\paragraph{Step 1: build the centroid tree.}
+Every node gets a chain of centroid ancestors:
+\[
+v \rightarrow c_0 \rightarrow c_1 \rightarrow \cdots
+\]
+where \(c_0\) is the deepest centroid component containing \(v\), \(c_1\) is its parent in the centroid tree, and so
+on.
+
+\paragraph{Step 2: precompute distances to those ancestors.}
+For every original node \(v\), store pairs \((c, dist(v,c))\) along that chain.
+
+\paragraph{Step 3: process updates.}
+When painting \(v\) red, update every centroid ancestor \(c\) of \(v\):
+\[
+best[c] = \min(best[c], dist(v,c)).
+\]
+
+\paragraph{Step 4: answer queries.}
+For query node \(u\), try every centroid ancestor \(c\) of \(u\):
+\[
+answer = \min_c \bigl(best[c] + dist(u,c)\bigr).
+\]
+
+\paragraph{Why this works.}
+Take the nearest red node \(r\) to \(u\). On the centroid decomposition recursion, there is a highest level where the
+path \(u \leftrightarrow r\) is split by the current centroid \(c\). That path passes through \(c\), so
+\[
+dist(u,r) = dist(u,c) + dist(r,c).
+\]
+The update on \(r\) ensures that \(best[c] \le dist(r,c)\), so the query can recover the right answer from that
+centroid level.
+
+\section*{Implementation Reasoning}
+
+The decomposition code has three distinct responsibilities:
+
+\begin{itemize}
+  \item compute subtree sizes inside the current component,
+  \item find the centroid of that component,
+  \item collect distances from every node in the component to this centroid and store them in the node's ancestor list.
+\end{itemize}
+
+The example implementation stores, for each original node, a vector of pairs:
+\[
+(\texttt{centroid}, \texttt{distance to centroid}).
+\]
+That is enough to support \(O(\log n)\) updates and queries for the nearest-red problem.
+
+The important implementation invariant is:
+
+\begin{quote}
+For every node \(v\), its stored centroid path contains exactly the centroids of all decomposition components that
+contain \(v\).
+\end{quote}
 
 \section*{Correctness Intuition}
 
-The recursion is complete because every path either passes through the current centroid or lies entirely inside one
-remaining component after the centroid is removed. Those two cases are disjoint, so processing them separately covers
-all paths exactly once at the right recursion level.
+Balanced separators are what make the method fast. The path-splitting argument is what makes it correct. Every query
+finds the right separator level where the queried path is ``seen'' by one centroid, and every update has already pushed
+its contribution into that centroid.
 
 \section*{Complexity Analysis}
 
-Centroid decomposition builds in \(O(n \log n)\) total time for the standard adjacency-list implementation. Many query
-schemes layered on top of it become \(O(\log n)\) or \(O(\log^2 n)\) per update/query.
-
-\section*{Implementation}
-
-The code builds the centroid parent tree and records the decomposition depth of each node. That is the reusable core I
-want before specializing to one particular path problem.
+\begin{itemize}
+  \item building the centroid decomposition: \(O(n \log n)\),
+  \item one \texttt{paint}: \(O(\log n)\),
+  \item one \texttt{nearest}: \(O(\log n)\),
+  \item memory: \(O(n \log n)\) for storing centroid ancestor paths.
+\end{itemize}
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Forgetting that the processing work per centroid still decides whether the full solution is fast enough.
-  \item Mutating the original tree structure in a way that breaks later recursion.
-  \item Mixing the original tree parent with the centroid-tree parent.
-  \item Using centroid decomposition for simple subtree-only queries that Euler tour already solves cleanly.
+  \item Confusing the original tree parent with the centroid-tree parent.
+  \item Forgetting that the per-centroid processing still decides whether the final solution is fast enough.
+  \item Computing distances to centroid ancestors lazily and accidentally turning queries back into \(O(n)\).
+  \item Using centroid decomposition for a plain subtree problem that Euler tour or rerooting solves more directly.
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Nearest active node queries.
-  \item Count or optimize over paths with bounded length or weighted constraints.
-  \item Combine with LCA distance queries or precomputed depth arrays.
+  \item Counting or optimizing over paths with a length threshold is a common offline centroid use.
+  \item Weighted trees work too, but stored distances become weighted distances.
+  \item If queries are about one root and one subtree only, heavy-light or Euler-tour reductions are usually cleaner.
+  \item If the update/query structure is global but not path-based, centroid decomposition may be the wrong abstraction.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
-  \item Xenia and Tree style nearest-marked-node queries.
-  \item Count paths whose length or weight satisfies a condition.
-  \item Recursively process tree paths through balanced separators.
+  \item Nearest marked node on a tree.
+  \item Count paths whose length satisfies a bound.
+  \item Path-aggregation problems where a balanced separator naturally splits the path family.
 \end{itemize}
 
 \section*{References}
 
 \begin{itemize}
   \item \href{https://cp-algorithms.com/graph/centroid_decomposition.html}{cp-algorithms: Centroid Decomposition}.
-  \item \href{https://usaco.guide/plat/centroid?lang=java}{USACO Guide: Centroid Decomposition}.
-  \item \href{https://codeforces.com/catalog?locale=en}{Codeforces Catalog}.
+  \item \href{https://usaco.guide/plat/centroid?lang=cpp}{USACO Guide: Centroid Decomposition}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
 \end{itemize}

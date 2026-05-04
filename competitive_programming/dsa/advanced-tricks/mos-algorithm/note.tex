@@ -1,71 +1,125 @@
 \section*{Overview}
 
-Mo's algorithm is an offline range-query technique for static arrays. Instead of answering queries in the given order,
-it reorders them so that the active interval changes only a little between consecutive queries.
+Mo's algorithm is an offline range-query technique for static arrays. It does not invent a new query formula. It
+reorders the queries so one maintained interval can be reused efficiently from one query to the next.
 
-The entire method is built around one idea: if I can maintain one interval with cheap \texttt{add} and
-\texttt{remove} operations, then smart offline ordering may be enough to answer all queries quickly.
+\section*{Problem-Driven Motivation}
 
-\section*{When to Use It}
+This technique appears when a problem has:
 
-Use it when:
+\begin{itemize}
+  \item a static array,
+  \item many subarray queries,
+  \item an answer that is awkward for Fenwick trees or segment trees,
+  \item but a statistic that is easy to update when one element enters or leaves the current interval.
+\end{itemize}
+
+The classic example is distinct values in subarrays. A segment tree does not naturally support ``how many values have
+positive frequency'' with easy merges. But if I already know the current interval, adding or removing one endpoint is
+trivial.
+
+\section*{Recognition Pattern}
+
+Mo's algorithm is usually worth considering when:
 
 \begin{itemize}
   \item the array is static or nearly static,
-  \item the statistic is hard for Fenwick trees or segment trees but easy to update when extending/shrinking an
-  interval,
   \item offline processing is allowed,
-  \item each \texttt{add}/\texttt{remove} is cheap.
+  \item the answer can be maintained by symmetric \texttt{add(index)} and \texttt{remove(index)} operations,
+  \item \(O((n+q)\sqrt{n})\) is acceptable and a cleaner online \(\log n\) structure is not obvious.
 \end{itemize}
 
-Typical fits include distinct-value queries, frequency-score queries, and some xor or mode-like statistics.
+Typical signals are:
 
-\section*{Core Idea}
+\begin{itemize}
+  \item distinct values,
+  \item frequency-score queries,
+  \item range statistics with local add/remove logic,
+  \item tree versions after Euler tour reduction.
+\end{itemize}
 
-Split indices into blocks of size about \(\sqrt{n}\). Sort queries primarily by the block of the left endpoint and
-secondarily by the right endpoint.
+\section*{Derivation}
 
-Then keep one active interval \([curL, curR]\). For each next query, move the endpoints until they match the desired
-interval, calling only:
+If I answer queries in arbitrary order, the maintained interval may jump wildly, so the total number of endpoint moves is
+too large. The only real freedom in an offline problem is the order of the queries, so Mo's algorithm spends that freedom
+to reduce pointer movement.
+
+Split indices into blocks of size about \(\sqrt{n}\). Sort queries by:
+
+\begin{itemize}
+  \item block of the left endpoint,
+  \item then by right endpoint, often alternating direction per block to reduce movement in practice.
+\end{itemize}
+
+After sorting, maintain one active interval \([curL, curR]\). To reach the next query \([l,r]\), move the endpoints one
+step at a time and call only:
 
 \begin{itemize}
   \item \texttt{add(index)},
   \item \texttt{remove(index)}.
 \end{itemize}
 
-The sorted order is chosen so that the total pointer movement stays manageable.
+The entire method depends on one invariant:
 
-\section*{Key Insight}
+\begin{quote}
+After every single pointer move, the maintained state matches the current active interval exactly.
+\end{quote}
 
-Mo's algorithm does not invent a new clever query formula. It changes the \emph{order} of work so that one maintained
-data structure can be reused across many queries.
+\section*{Worked Problem}
 
-That makes the add/remove invariant the real center of the method:
-\textbf{after each endpoint movement, the maintained statistic must equal the answer on the current active interval.}
+\paragraph{Problem.}
+For each query \([l,r]\), count how many distinct values appear in \(a[l \dots r]\).
 
-\section*{Operations / Main Technique}
+\paragraph{Why naive fails.}
+Scanning each interval independently is \(O(nq)\), which is too slow at \(n,q \le 2 \cdot 10^5\).
 
-The standard recipe is:
+\paragraph{Why prefix methods are awkward.}
+Distinct-count is not an additive statistic. There is no simple formula that subtracts two prefix answers.
+
+\paragraph{Mo invariant.}
+Maintain:
 
 \begin{itemize}
-  \item choose a block size near \(\sqrt{n}\),
-  \item sort queries by Mo order,
-  \item maintain the current interval and one answer object,
-  \item process sorted queries by endpoint moves.
+  \item a frequency array \(\texttt{freq[value]}\),
+  \item one integer \(\texttt{distinct}\).
 \end{itemize}
 
-\paragraph{Worked invariant.}
-For distinct-value queries, the maintained state is just a frequency table plus one counter \(\texttt{distinct}\). When
-adding a value, increment its frequency and raise \(\texttt{distinct}\) if the frequency became \(1\). When removing,
-lower \(\texttt{distinct}\) if the frequency became \(0\).
+Then:
+
+\begin{itemize}
+  \item on add of value \(x\), if \(\texttt{freq[x]}\) becomes \(1\), increment \(\texttt{distinct}\),
+  \item on remove of value \(x\), if \(\texttt{freq[x]}\) becomes \(0\), decrement \(\texttt{distinct}\).
+\end{itemize}
+
+\paragraph{Final algorithm.}
+
+\begin{itemize}
+  \item coordinate-compress values if needed,
+  \item sort queries in Mo order,
+  \item move the current interval toward each query,
+  \item record \(\texttt{distinct}\) when the interval matches.
+\end{itemize}
+
+\section*{Implementation Reasoning}
+
+The logic of \texttt{add} and \texttt{remove} matters more than the sorting comparator. If those two functions are not
+perfect inverses of each other, Mo's algorithm quietly returns nonsense.
+
+Practical implementation choices:
+
+\begin{itemize}
+  \item compress large values first, or the frequency array becomes impossible to allocate,
+  \item use alternating right-endpoint order inside each block for better constants,
+  \item keep intervals consistently inclusive or half-open; mixing the two is a common bug source.
+\end{itemize}
+
+The code below is intentionally the classic distinct-values version because it demonstrates the invariant cleanly.
 
 \section*{Correctness Intuition}
 
-Mo's ordering changes only the sequence of queries, not the meaning of any query. At every step, the active interval is
-transformed into the next query interval through a sequence of valid add/remove operations.
-
-If the maintained statistic is correct after every single add/remove, then it is correct after the whole transition,
-which means it is correct for the new query interval.
+Reordering queries does not change their meaning. It only changes how much work is reused between them. As long as each
+endpoint move updates the maintained state correctly, the final state after all moves equals the answer for the new
+interval.
 
 \section*{Complexity Analysis}
 
@@ -73,54 +127,40 @@ With block size about \(\sqrt{n}\) and \(O(1)\) add/remove:
 
 \begin{itemize}
   \item sorting: \(O(q \log q)\),
-  \item interval movement: about \(O((n + q)\sqrt{n})\),
-  \item memory: problem-dependent, usually \(O(n)\) or \(O(\text{value range})\).
+  \item total interval movement: about \(O((n+q)\sqrt{n})\),
+  \item memory: usually \(O(n)\) or \(O(\text{value range after compression})\).
 \end{itemize}
-
-The constants matter. Mo's algorithm is powerful, but it is not the first structure I try when an online log-time
-solution already fits naturally.
-
-\section*{Implementation}
-
-The reference code solves the classic distinct-values query problem. It assumes the values are already coordinate
-compressed, which keeps the frequency array compact.
-
-It also uses the alternating right-endpoint order inside each left block. That is a common practical optimization for
-reducing pointer movement.
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Forgetting that the method is offline.
-  \item Not coordinate-compressing large values before building the frequency table.
-  \item Mixing inclusive intervals with half-open intervals in the pointer moves.
-  \item Writing an add/remove pair that is not perfectly symmetric.
-  \item Choosing Mo's algorithm even though the problem really wanted a simpler online structure.
+  \item Forgetting that the whole method is offline.
+  \item Writing \texttt{add} and \texttt{remove} that are not exact inverses.
+  \item Using raw values without compression.
+  \item Choosing Mo's algorithm when a simpler online structure already solves the problem more directly.
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Mo with updates, where time becomes a third dimension,
-  \item tree Mo after an Euler-tour reduction,
-  \item Hilbert-order variants for better constants,
-  \item block-size tuning depending on the cost of add/remove.
+  \item Mo with updates adds a time dimension and is significantly more fragile.
+  \item Tree Mo first reduces the tree to an Euler-tour order.
+  \item Hilbert-order sorting often improves constants.
+  \item If add/remove are not cheap, Mo's ordering alone does not save the solution.
 \end{itemize}
-
-The update and tree variants are powerful, but they are also much easier to get wrong than the plain array version.
 
 \section*{Practice Problems}
 
 \begin{itemize}
   \item Distinct values on subarrays.
-  \item Frequency-score queries where add/remove are local.
-  \item Offline range problems that resist prefix sums and standard trees.
+  \item Frequency-score range queries.
+  \item Offline array or tree queries with local add/remove maintenance.
 \end{itemize}
 
 \section*{References}
 
 \begin{itemize}
-  \item \href{https://cp-algorithms.com/data_structures/sqrt_decomposition.html}{cp-algorithms: Sqrt decomposition and Mo's algorithm}.
-  \item \href{https://usaco.guide/plat/sqrt}{USACO Guide: Square root decomposition and Mo's algorithm}.
+  \item \href{https://cp-algorithms.com/data_structures/sqrt_decomposition.html}{cp-algorithms: Sqrt Decomposition and Mo's Algorithm}.
+  \item \href{https://usaco.guide/plat/sqrt}{USACO Guide: Square Root Decomposition and Mo's Algorithm}.
   \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
 \end{itemize}

@@ -1,7 +1,14 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
 struct Query {
-    int l, r, idx;
+    int l;
+    int r;
+    int idx;
 };
 
+// Example application: count distinct values on many static subarrays.
 vector<int> mos_distinct(const vector<int>& values, vector<Query> queries) {
     int n = (int)values.size();
     if (n == 0) return vector<int>(queries.size(), 0);
@@ -38,6 +45,5 @@ vector<int> mos_distinct(const vector<int>& values, vector<Query> queries) {
         while (current_right > query.r) remove(current_right--);
         answers[query.idx] = distinct;
     }
-
     return answers;
 }

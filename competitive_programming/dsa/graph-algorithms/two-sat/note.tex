@@ -1,106 +1,174 @@
 \section*{Overview}
 
-2-SAT is the form of Boolean satisfiability that still behaves like graph theory. Once every clause has exactly two
-literals, the problem can be turned into an implication graph and solved with SCC decomposition in linear time.
+2-SAT is the point where Boolean satisfiability stops feeling like brute force and starts feeling like graph theory.
+Once every clause has exactly two literals, the whole problem becomes an implication graph plus strongly connected
+components.
 
-\section*{When to Use It}
+\section*{Problem-Driven Motivation}
 
-Use 2-SAT when:
+Many contest statements look like this after modeling:
 
 \begin{itemize}
-  \item choices are binary,
-  \item constraints look like ``at least one of these two literals must hold'',
-  \item the problem is really about compatible or incompatible pairs of decisions.
+  \item each object has exactly two possible states,
+  \item some pairs of chosen states are incompatible,
+  \item some pair of states must contain at least one true choice.
 \end{itemize}
 
-This appears in switch toggles, orientation choices, scheduling with binary states, and selection problems with pairwise
-logic constraints.
+The naive space is \(2^n\), which is hopeless once \(n\) reaches \(10^5\). But the constraints are not arbitrary SAT
+clauses. They are pairwise logical constraints, and that extra structure is enough to solve them in linear time.
 
-\section*{Core Idea}
+\section*{Recognition Pattern}
 
-Represent each variable \(x\) by two nodes:
-\[
-x \quad\text{and}\quad \lnot x.
-\]
-A clause \((a \lor b)\) is equivalent to the two implications:
-\[
-\lnot a \Rightarrow b,
-\qquad
-\lnot b \Rightarrow a.
-\]
-Add those edges to the implication graph, then compute SCCs.
-
-\section*{Key Insight}
-
-If \(x\) and \(\lnot x\) lie in the same SCC, then each implies the other, so the formula forces both true and false at
-once. Otherwise, the SCC topological order gives a satisfying assignment.
-
-\section*{Operations / Main Technique}
+2-SAT is the right direction when:
 
 \begin{itemize}
-  \item encode each literal as one graph node,
-  \item add implications for every clause,
+  \item every decision is binary,
+  \item constraints can be written as clauses \((a \lor b)\),
+  \item the problem contains implications like ``if this state is chosen, that state is forbidden / forced,''
+  \item the intended model is a large compatibility system rather than a numeric optimization.
+\end{itemize}
+
+Classic signals are:
+
+\begin{itemize}
+  \item choose one of two colors / directions / schedules,
+  \item at least one of two options must be taken,
+  \item two specific literal choices cannot both happen.
+\end{itemize}
+
+\section*{Derivation}
+
+The key equivalence is:
+\[
+(a \lor b) \iff (\lnot a \Rightarrow b)\ \text{and}\ (\lnot b \Rightarrow a).
+\]
+
+So instead of treating clauses directly, build a directed graph on literals:
+
+\begin{itemize}
+  \item one node for each variable being true,
+  \item one node for each variable being false.
+\end{itemize}
+
+Then every clause adds two implications.
+
+Why do SCCs solve the problem?
+
+\begin{itemize}
+  \item If \(x\) and \(\lnot x\) lie in the same SCC, then each implies the other, so the formula forces \(x\) to be
+  simultaneously true and false. That is impossible.
+  \item Otherwise, the SCC condensation graph is a DAG. Processing SCCs in reverse topological order lets us choose a
+  literal before its negation whenever possible, producing a valid assignment.
+\end{itemize}
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Each worker must be assigned to one of two shifts: day or night. Some pairs of concrete choices are incompatible. For
+example:
+
+\begin{itemize}
+  \item if worker \(u\) takes day, worker \(v\) cannot take night,
+  \item at least one of worker \(a\) taking day or worker \(b\) taking day must happen.
+\end{itemize}
+
+\paragraph{Why naive fails.}
+Trying all shift assignments is \(2^n\).
+
+\paragraph{Modeling.}
+Let variable \(x_i\) mean ``worker \(i\) takes day.'' Then:
+
+\begin{itemize}
+  \item ``worker \(u\) day and worker \(v\) night cannot both happen'' becomes
+  \[
+  (\lnot(x_u \land \lnot x_v)) \iff (\lnot x_u \lor x_v),
+  \]
+  \item ``at least one of \(x_a\) or \(x_b\)'' is already a 2-SAT clause:
+  \[
+  (x_a \lor x_b).
+  \]
+\end{itemize}
+
+\paragraph{Graph construction.}
+Every clause \((p \lor q)\) contributes:
+\[
+\lnot p \Rightarrow q,\qquad
+\lnot q \Rightarrow p.
+\]
+
+\paragraph{Final algorithm.}
+
+\begin{itemize}
+  \item build the implication graph,
   \item compute SCCs,
-  \item assign each variable by SCC order.
+  \item reject if any variable and its negation share an SCC,
+  \item otherwise assign values by SCC order.
 \end{itemize}
 
-\paragraph{Worked example.}
-The clause \((x \lor \lnot y)\) produces:
-\[
-\lnot x \Rightarrow \lnot y,
-\qquad
-y \Rightarrow x.
-\]
-These are the two graph edges the solver actually needs.
+\section*{Implementation Reasoning}
+
+The only implementation detail that really matters is a clean literal encoding.
+
+The code uses:
+
+\begin{itemize}
+  \item node \(2x\) for ``variable \(x\) is true,''
+  \item node \(2x+1\) for ``variable \(x\) is false,''
+  \item negation by \(\texttt{literal} \oplus 1\).
+\end{itemize}
+
+That makes the clause and implication helpers short and hard to misuse.
+
+The solver exposes:
+
+\begin{itemize}
+  \item \texttt{add\_or},
+  \item \texttt{add\_implication},
+  \item \texttt{force\_true},
+  \item \texttt{satisfiable()}.
+\end{itemize}
 
 \section*{Correctness Intuition}
 
-Every clause \((a \lor b)\) fails only when both \(a\) and \(b\) are false, so the implication form precisely captures
-which literals must become true when another literal is false. SCCs detect contradictions, and the reverse topological
-order ensures that once one side of a variable pair is chosen, all of its implications are respected.
+The implication graph captures the exact situations where one false literal forces another literal to become true. SCCs
+detect contradictions because mutual reachability means mutual forcing. Once contradictions are gone, assigning literals
+in reverse SCC topological order guarantees that choosing a literal never violates an implication to an already-fixed
+literal.
 
 \section*{Complexity Analysis}
 
 For \(n\) variables and \(m\) clauses:
-\begin{itemize}
-  \item graph size: \(2n\) vertices and \(2m\) edges,
-  \item total time: \(O(n + m)\),
-  \item memory: \(O(n + m)\).
-\end{itemize}
-
-\section*{Implementation}
-
-The code includes a compact solver with:
 
 \begin{itemize}
-  \item clause insertion,
-  \item implication insertion,
-  \item satisfiability check,
-  \item one recovered assignment.
+  \item vertices: \(2n\),
+  \item edges: \(2m\) plus any extra forced implications,
+  \item total time: \(O(n+m)\),
+  \item memory: \(O(n+m)\).
 \end{itemize}
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Mixing variable indices with literal indices incorrectly.
-  \item Forgetting that the assignment is read from SCC order, not from raw DFS order.
-  \item Trying to force constraints that are not reducible to binary clauses.
+  \item Mixing variable indices with literal indices.
+  \item Extracting the assignment from DFS order instead of SCC order.
+  \item Forgetting that ``not both'' is a clause, not a direct edge, until translated correctly.
+  \item Trying to force constraints that are not reducible to 2-literal clauses.
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Encode ``at most one'' constraints with several binary clauses in small cases.
-  \item Use the implication graph to explain forced assignments and contradictions.
-  \item General SAT, which is far harder and not covered by this graph trick.
+  \item ``At most one'' over many choices needs extra encoding; it is not one 2-SAT clause by itself.
+  \item General SAT does not collapse to SCCs.
+  \item Sometimes a graph-coloring or bipartite formulation is simpler than 2-SAT, even if 2-SAT is possible.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
-  \item Assign binary states under pairwise logical constraints.
-  \item Choose orientations or colors from two options with incompatibility rules.
-  \item Giant Pizza and similar implication-graph tasks.
+  \item Binary scheduling with pairwise incompatibilities.
+  \item Orientation or color choices with logical constraints.
+  \item Giant Pizza and similar implication-graph problems.
 \end{itemize}
 
 \section*{References}
@@ -108,5 +176,5 @@ The code includes a compact solver with:
 \begin{itemize}
   \item \href{https://cp-algorithms.com/graph/2SAT.html}{cp-algorithms: 2-SAT}.
   \item \href{https://usaco.guide/adv/SCC}{USACO Guide: SCC and 2-SAT}.
-  \item \href{https://codeforces.com/catalog?locale=en}{Codeforces Catalog}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
 \end{itemize}

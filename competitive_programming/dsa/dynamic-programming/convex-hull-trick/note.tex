@@ -1,79 +1,122 @@
 \section*{Overview}
 
-The convex hull trick is the DP optimization pattern for transitions that can be rewritten as evaluating a family of
-lines at query points:
+Convex hull trick is the DP optimization pattern for recurrences that can be rewritten as
 \[
-dp[i] = \min_j (m_j x_i + b_j)
+dp[i] = cost(i) + \min_j (m_j x_i + b_j)
 \]
-or the same with \(\max\).
+or the corresponding maximum version. The crucial step is not the data structure. It is the algebra that turns previous
+states into lines and current states into query points.
 
-The big reduction is that each old state becomes a line, and each new state becomes a query. Once that translation is
-visible, many quadratic DP transitions collapse to logarithmic or even amortized constant time per state.
+\section*{Problem-Driven Motivation}
 
-\section*{When to Use It}
-
-Use it when:
+A recurring contest situation is:
 
 \begin{itemize}
-  \item the transition can be rearranged into \(m x + b\),
-  \item many candidate lines accumulate over time,
-  \item query points or slopes are monotone, or you have another data structure for dynamic lines,
-  \item the naive DP is too slow.
+  \item \(n \le 2 \cdot 10^5\),
+  \item the naive DP is \(O(n^2)\),
+  \item after expanding squares or separating variables, every candidate \(j\) contributes something linear in the
+  current variable \(x_i\).
 \end{itemize}
 
-If the problem does not reduce cleanly to lines and point queries, trying to force CHT usually creates more confusion
-than speed.
+At that point the real problem is no longer ``try every previous \(j\).'' It is ``maintain the lower envelope of many
+lines.''
 
-\section*{Core Idea}
+\section*{Recognition Pattern}
 
-Each transition source contributes one line \(y = m x + b\). For a target state with query value \(x\), the answer is
-the lowest line value at that \(x\).
+The strongest signals are:
+
+\begin{itemize}
+  \item a transition with \(\min\) or \(\max\) over previous states,
+  \item algebraic expansion produces \(m_j x_i + b_j\),
+  \item query points \(x_i\) are monotone, and maybe slopes \(m_j\) are monotone too,
+  \item the DP bottleneck is the transition loop over all \(j\).
+\end{itemize}
+
+If the line insertion order or query order is arbitrary, the same derivation may still help, but the correct structure
+becomes Li Chao tree instead of the deque hull in this note.
+
+\section*{Derivation}
+
+Suppose the transition is
+\[
+dp[i] = x_i^2 + C + \min_{j < i}\bigl(dp[j] + x_j^2 - 2x_i x_j\bigr).
+\]
+
+For fixed \(j\), the part depending on \(i\) is
+\[
+(-2x_j)\cdot x_i + (dp[j] + x_j^2).
+\]
+
+So state \(j\) becomes the line:
+\[
+y = m_j x + b_j,\qquad
+m_j = -2x_j,\quad b_j = dp[j] + x_j^2.
+\]
+
+Now the optimization is geometric:
+
+\begin{quote}
+At query \(x_i\), find the line with minimum value.
+\end{quote}
+
+If lines are added in monotone slope order and query points are monotone, the lower hull can be stored in a deque.
 
 \includegraphics[width=\textwidth]{figures/lower-hull.svg}
 
-So the optimization problem becomes a geometry/data-structure problem: maintain the lower envelope of useful lines and
-query it quickly.
+\section*{Worked Problem}
 
-\section*{Key Insight}
-
-There are really two families of CHT:
-
-\begin{itemize}
-  \item \textbf{monotone hulls}: slopes are inserted in sorted order and queries come in sorted \(x\)-order,
-  \item \textbf{dynamic hulls}: insertion/query order is arbitrary, so a stronger structure such as Li Chao tree is
-  needed.
-\end{itemize}
-
-The deque-based hull in this note belongs to the first family. It is extremely fast, but only because the monotonicity
-assumptions let every popped line disappear forever.
-
-\section*{Operations / Main Technique}
-
-For the monotone minimum version:
-
-\begin{itemize}
-  \item \textbf{add line}: insert lines in monotone slope order,
-  \item \textbf{remove bad line}: if the middle of three lines is never optimal, pop it from the back,
-  \item \textbf{query}: while the second line beats the first at the current \(x\), pop from the front.
-\end{itemize}
-
-\paragraph{Worked DP pattern.}
-If
+\paragraph{Problem.}
+The coordinates \(x_0 < x_1 < \cdots < x_{n-1}\) are sorted. Compute
 \[
-dp[i] = a_i^2 + \min_{j < i}(dp[j] + b_j^2 - 2 a_i b_j),
+dp[0] = 0,\qquad
+dp[i] = x_i^2 + C + \min_{0 \le j < i}\bigl(dp[j] + x_j^2 - 2x_i x_j\bigr).
 \]
-then each \(j\) contributes slope \(m_j = -2b_j\) and intercept \(c_j = dp[j] + b_j^2\), queried at \(x = a_i\).
+
+\paragraph{Why naive fails.}
+Trying all \(j < i\) for every \(i\) is \(O(n^2)\).
+
+\paragraph{Why monotone CHT fits.}
+Because the \(x_i\) are sorted:
+
+\begin{itemize}
+  \item query points \(x_i\) are increasing,
+  \item slopes \(m_j = -2x_j\) are decreasing.
+\end{itemize}
+
+Those two monotonicities are exactly what the deque hull needs.
+
+\paragraph{Deque invariant.}
+The lines stored in the deque appear in the same order as the intervals of \(x\)-values where they are optimal.
+
+\paragraph{Insertion rule.}
+When a new line arrives, if the middle line of the last three is never optimal for any \(x\), remove it. That is the
+``pop from the back'' step.
+
+\paragraph{Query rule.}
+When queries come with nondecreasing \(x\), if the second line is already better than the first at the current \(x\),
+the first line will never become optimal again. That is the ``pop from the front'' step.
+
+\section*{Implementation Reasoning}
+
+The implementation uses exact integer comparisons with \texttt{\_\_int128}, not floating intersection points. That
+avoids precision bugs and makes equal-slope handling explicit.
+
+Important invariants:
+
+\begin{itemize}
+  \item slopes are inserted in monotone order,
+  \item query points are processed in monotone order,
+  \item every line removed from the deque is permanently useless under those assumptions.
+\end{itemize}
+
+The code below keeps the generic hull operations and also includes a direct solver for the quadratic DP above.
 
 \section*{Correctness Intuition}
 
-Every line that survives on the lower hull owns an interval of \(x\)-values where it is optimal. Those intervals
-appear in the same order as the lines on the hull.
-
-If inserting a new line makes the intersection order stop being monotone, the middle line loses its whole ownership
-interval and can never be optimal again. Likewise, if the second line is already better than the first at the current
-query \(x\), the first line will never return for any later monotone query.
-
-That is why both kinds of popping are permanent.
+Each surviving line owns a contiguous interval of query \(x\)-values where it is best. Monotone slope insertion keeps
+those ownership intervals in order. Once a line loses its entire interval because of a newer line, it can never come
+back. Likewise, once the front line loses to the next line at the current monotone query point, all later query points
+are even worse for that front line.
 
 \section*{Complexity Analysis}
 
@@ -82,58 +125,40 @@ For the monotone deque version:
 \begin{itemize}
   \item add line: amortized \(O(1)\),
   \item query: amortized \(O(1)\),
-  \item total for \(n\) insertions and \(n\) monotone queries: \(O(n)\),
+  \item total for \(n\) insertions and \(n\) queries: \(O(n)\),
   \item memory: \(O(n)\).
-\end{itemize}
-
-General online variants usually cost \(O(\log n)\) per operation instead.
-
-\section*{Implementation}
-
-The reference code stores a deque of lines and uses cross multiplication with \texttt{\_\_int128} rather than floating
-intersections. That choice is deliberate: integer geometry is much easier to trust under contest constraints.
-
-The exposed interface is minimal:
-
-\begin{itemize}
-  \item \texttt{add\_line(m, b)},
-  \item \texttt{query(x)}.
 \end{itemize}
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Using the monotone deque version when slopes or query points are not monotone.
-  \item Mixing up minimum-hull and maximum-hull inequalities.
-  \item Comparing line intersections with floating point when exact integer comparison is possible.
-  \item Ignoring equal-slope edge cases.
-  \item Deriving the data structure correctly but deriving the DP transformation incorrectly.
+  \item Using the deque hull when slopes or query points are not monotone.
+  \item Deriving the line formula incorrectly even though the data structure is correct.
+  \item Forgetting to handle equal slopes.
+  \item Flipping inequalities when switching between minimum and maximum.
+  \item Using floating intersections when exact integer arithmetic was available.
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Li Chao tree for arbitrary insertion/query order,
-  \item offline hulls after sorting queries,
-  \item maximum instead of minimum,
-  \item hulls inside divide-and-conquer or alien-trick style optimizations.
+  \item Li Chao tree handles arbitrary insertion/query order.
+  \item Offline hulls can work when only one of the monotonicities is missing but queries can be resorted.
+  \item If the recurrence does not reduce to linear functions, this trick is not applicable.
 \end{itemize}
-
-Li Chao tree is the extension I keep in mind when the geometry is still linear but the monotonicity assumptions are
-gone.
 
 \section*{Practice Problems}
 
 \begin{itemize}
-  \item DP recurrences with one quadratic term that expands into lines.
-  \item Problems where sorted coordinates give monotone query points for free.
-  \item Tasks that can be solved either by monotone CHT or by Li Chao tree.
+  \item Quadratic DP transitions on sorted coordinates.
+  \item Monotone slope/query problems where each previous state is a line.
+  \item Problems that can be solved either by monotone CHT or by Li Chao after losing monotonicity.
 \end{itemize}
 
 \section*{References}
 
 \begin{itemize}
-  \item \href{https://cp-algorithms.com/geometry/convex_hull_trick.html}{cp-algorithms: Convex hull trick and Li Chao tree}.
+  \item \href{https://cp-algorithms.com/geometry/convex_hull_trick.html}{cp-algorithms: Convex Hull Trick and Li Chao Tree}.
   \item \href{https://usaco.guide/CPH.pdf}{Competitive Programmer's Handbook}.
   \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
 \end{itemize}

@@ -1,95 +1,145 @@
 \section*{Overview}
 
-Coordinate compression is the step that turns ``the values are too large'' into ``the relative order is the only thing
-that matters.'' In contest code, it is often the small preprocessing move that makes Fenwick trees, segment trees,
-sweep-line arrays, and offline events feasible.
+Coordinate compression is not an optimization trick in isolation. It is the preprocessing step that makes an
+array-based solution legal once the original values are too large, negative, or sparse.
 
-\section*{When to Use It}
+\section*{Problem-Driven Motivation}
 
-Use coordinate compression when:
-
-\begin{itemize}
-  \item values are large, negative, or sparse,
-  \item only comparisons or relative order matter,
-  \item an array-based data structure would be perfect after remapping the values,
-  \item offline queries refer only to values already known in advance.
-\end{itemize}
-
-\section*{Core Idea}
-
-Collect the values that matter, sort them, erase duplicates, and replace each value by its index in that sorted list.
-If \(x < y\), then the compressed indices preserve that order.
-
-So instead of storing information on a huge axis like \(10^9\), I work on an axis of size at most the number of
-distinct values that appear.
-
-\section*{Key Insight}
-
-Compression preserves order, not distance. That is enough for frequency tables, predecessor logic, inversion counting,
-and many sweep-style solutions. It is not enough when actual gaps or coordinate lengths matter unless those lengths are
-handled separately.
-
-\section*{Operations / Main Technique}
+Suppose an array contains values up to \(10^9\), possibly negative, and the intended solution is:
 
 \begin{itemize}
-  \item gather all values that will ever be referenced,
-  \item sort and deduplicate,
-  \item replace each original value by \(\texttt{lower\_bound}\) in the sorted list,
-  \item keep the reverse lookup array if the original value must be recovered later.
+  \item Fenwick tree over value ranks,
+  \item segment tree over event coordinates,
+  \item frequency array over distinct values.
 \end{itemize}
 
-\paragraph{Worked example.}
-If the values are \(\{100, -7, 100, 42\}\), the sorted unique list is \(\{-7, 42, 100\}\), so the compressed values
-are \(\{2, 0, 2, 1\}\).
+The algorithmic idea is fine, but allocating arrays indexed directly by raw coordinates is impossible. What really
+matters is usually not the exact coordinate size. It is the relative order.
+
+That is exactly the situation where compression turns a dead idea into a working one.
+
+\section*{Recognition Pattern}
+
+Compression is usually the right move when:
+
+\begin{itemize}
+  \item values are huge but only \(O(n)\) of them ever appear,
+  \item comparisons such as \(<\), \(\le\), or equality are the only important operations,
+  \item the next structure wants small integer indices,
+  \item the full set of referenced values is known offline.
+\end{itemize}
+
+Typical contest phrases are: ``values up to \(10^9\)'', ``negative coordinates'', ``sparse points'', and ``after sorting,
+the actual distances do not matter.''
+
+\section*{Derivation}
+
+If an algorithm only depends on order, then replacing every value by its rank does not change the answer.
+
+Formally, after sorting the distinct values
+\[
+v_0 < v_1 < \cdots < v_{k-1},
+\]
+map every original value \(x\) to the unique index \(id(x)\) such that \(v_{id(x)} = x\).
+
+Then:
+
+\begin{itemize}
+  \item \(x < y \iff id(x) < id(y)\),
+  \item \(x = y \iff id(x) = id(y)\).
+\end{itemize}
+
+That is enough for rank-based data structures.
+
+What compression \emph{does not} preserve is geometric length. If an interval length or coordinate gap matters directly,
+you must either keep the original values too, or transform the problem more carefully.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Count inversions in an array of length \(n \le 2 \cdot 10^5\), where values may be negative and as large as \(10^9\).
+
+\paragraph{Why the naive approach fails.}
+The naive double loop is \(O(n^2)\). A Fenwick tree over raw values is impossible because the value range is far too
+large.
+
+\paragraph{How compression fixes it.}
+
+\begin{itemize}
+  \item Collect all array values.
+  \item Sort and deduplicate them.
+  \item Replace each value by its rank.
+  \item Process the array from left to right with a Fenwick tree over compressed ranks.
+\end{itemize}
+
+If the current value has compressed rank \(r\), then the number of earlier elements greater than it is:
+\[
+\texttt{seen\_so\_far} - \texttt{fenwick.prefix\_sum}(r+1).
+\]
+
+\paragraph{Why this is correct.}
+Compression preserves the order ``greater than'' exactly. So counting bigger ranks is the same as counting bigger
+original values.
+
+\section*{Implementation Reasoning}
+
+The practical questions that matter are:
+
+\begin{itemize}
+  \item \textbf{When do I collect values?} Before building the mapping, gather every value that any later operation will
+  reference. In offline problems this includes query values, endpoints, and sometimes transformed values like \(r+1\).
+  \item \textbf{Do I need reverse mapping?} Keep the sorted unique array if later logic needs the original values back.
+  \item \textbf{0-index or 1-index?} Compression itself is naturally 0-indexed, but Fenwick trees are often 1-indexed.
+  Convert once and keep it consistent.
+\end{itemize}
+
+The code below provides a reusable compressor plus an inversion-counting application.
 
 \section*{Correctness Intuition}
 
-Sorting and deduplication turn the values into their rank order. Since any comparison between original values is
-equivalent to comparing their ranks, every order-based algorithm remains valid after the transformation.
+Compression only changes labels. It does not change the sorted order of equal or distinct values. Therefore any
+algorithm whose logic depends solely on order or equality behaves identically after remapping.
 
 \section*{Complexity Analysis}
 
-For \(n\) collected values:
+For \(m\) collected values:
+
 \begin{itemize}
-  \item compression preprocessing: \(O(n \log n)\),
-  \item each map-to-index query with \(\texttt{lower\_bound}\): \(O(\log n)\),
-  \item memory: \(O(n)\).
+  \item build compression: \(O(m \log m)\),
+  \item one lookup with \texttt{lower\_bound}: \(O(\log m)\),
+  \item memory: \(O(m)\).
 \end{itemize}
-
-\section*{Implementation}
-
-The code includes a small compressor that returns both the compressed indices and the sorted list of unique values. I
-prefer this shape because most problems need the reverse mapping sooner or later.
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Compressing values but forgetting to include future query values in the collected set.
-  \item Using compression when real distances matter directly.
-  \item Mixing 0-indexed compressed coordinates with a 1-indexed Fenwick tree without adjusting.
-  \item Recomputing \(\texttt{lower\_bound}\) repeatedly when a one-time map would be simpler.
+  \item Forgetting to include values that appear only in future queries.
+  \item Compressing interval endpoints but forgetting that a half-open model may also need \(r+1\).
+  \item Treating compressed indices as if their differences were real geometric distances.
+  \item Mixing 0-indexed compressed values with a 1-indexed Fenwick tree.
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Compress pairs or tuples lexicographically.
-  \item Compress one axis inside offline geometry or sweep-line problems.
-  \item Use a hash map after sorting if many repeated lookups are needed.
+  \item Compress pairs or tuples lexicographically when one scalar is not enough.
+  \item Compress both axes in offline geometry or rectangle-query problems.
+  \item If updates introduce previously unseen coordinates online, static compression is no longer enough; use maps,
+  balanced trees, or rebuild offline.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
-  \item Inversion counting with a Fenwick tree.
+  \item Inversion counting.
   \item Offline rectangle counting after compressing one or two axes.
-  \item Dynamic frequency queries on large input values.
+  \item Dynamic frequency or order-statistics queries on large sparse values.
 \end{itemize}
 
 \section*{References}
 
 \begin{itemize}
-  \item \href{https://codeforces.com/catalog?locale=en}{Codeforces Catalog}.
-  \item \href{https://cp-algorithms.com/data_structures/segment_tree.html}{cp-algorithms: Segment Tree} for common compressed-coordinate uses.
-  \item \href{https://usaco.guide/plat/sweep-line}{USACO Guide: Sweep Line and related offline geometry modules}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
+  \item \href{https://cp-algorithms.com/data_structures/segment_tree.html}{cp-algorithms: common segment-tree uses with compressed coordinates}.
+  \item \href{https://usaco.guide/plat/sweep-line}{USACO Guide: Sweep-line and offline geometry modules}.
 \end{itemize}

@@ -1,3 +1,7 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
 struct SumDistancesRerooting {
     int n;
     vector<vector<int>> tree;
@@ -37,3 +41,10 @@ struct SumDistancesRerooting {
         return answer;
     }
 };
+
+// Example application: compute sum of distances from every node.
+vector<long long> sum_of_distances_on_tree(int n, const vector<pair<int, int>>& edges) {
+    SumDistancesRerooting solver(n);
+    for (const auto& edge : edges) solver.add_edge(edge.first, edge.second);
+    return solver.solve(0);
+}

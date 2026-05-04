@@ -1,85 +1,154 @@
 \section*{Overview}
 
-Suffix array is the lightest full suffix structure I regularly want in contests. It orders all suffixes of a string
-lexicographically, which makes substring comparison, lexicographic queries, and several repeated-pattern tasks much more
-manageable.
+Suffix array is the static full-string structure I want when the problem is about lexicographic order of suffixes,
+substring comparison, or repeated substrings, but I still want something lighter than a suffix tree.
 
-\section*{When to Use It}
+\section*{Problem-Driven Motivation}
 
-Use a suffix array when:
-
-\begin{itemize}
-  \item lexicographic order of suffixes matters,
-  \item many substring comparisons or pattern queries are needed,
-  \item the problem wants structure stronger than hashing but simpler than a suffix tree.
-\end{itemize}
-
-\section*{Core Idea}
-
-The suffix array \(\texttt{sa}\) stores the starting indices of the suffixes in sorted order. The standard doubling
-construction sorts suffixes by the first \(2^k\) characters, doubling that compared prefix length each round.
-
-\section*{Key Insight}
-
-Two suffixes can be compared by pairs of class ids from the previous round. That turns the expensive ``compare long
-strings'' step into sorting small tuples that summarize larger and larger prefixes.
-
-\section*{Operations / Main Technique}
+Suppose a problem asks for one of the following on a string of length \(n \le 2 \cdot 10^5\):
 
 \begin{itemize}
-  \item build \(\texttt{sa}\) by doubling,
-  \item build the LCP array with Kasai's algorithm,
-  \item use binary search on the suffix array for pattern lookup,
-  \item reduce repeated-substring tasks to neighbors in suffix order.
+  \item count distinct substrings,
+  \item find the lexicographically smallest occurrence of a pattern,
+  \item analyze repeated substrings,
+  \item compare many substrings lexicographically.
 \end{itemize}
 
-\paragraph{Worked example.}
-If two suffixes share a long common prefix, they appear near each other in suffix-array order. That is why repeated
-substring questions usually look at adjacent suffixes and the LCP array rather than arbitrary pairs.
+The naive view is to work directly with substrings, but there are \(O(n^2)\) of them. The structural observation is
+that every substring is a prefix of some suffix. Once all suffixes are sorted, a lot of substring logic becomes local.
+
+\section*{Recognition Pattern}
+
+Suffix array is a strong fit when:
+
+\begin{itemize}
+  \item the string is static,
+  \item lexicographic suffix order matters,
+  \item pattern search by binary search is acceptable,
+  \item repeated-substring questions reduce to common prefixes of nearby suffixes.
+\end{itemize}
+
+Signals that usually point here:
+
+\begin{itemize}
+  \item ``sort suffixes / rotations'',
+  \item ``count distinct substrings'',
+  \item ``longest repeated substring'',
+  \item ``pattern queries on one fixed text''.
+\end{itemize}
+
+\section*{Derivation}
+
+The suffix array \(\texttt{sa}\) stores all suffix starting positions in lexicographic order.
+
+The hard part is building it without comparing long suffix strings directly. The doubling algorithm solves this by
+ranking prefixes of increasing length.
+
+\paragraph{Round \(k\).}
+Assume we already know the lexicographic classes of all length-\(2^k\) prefixes. Then the first \(2^{k+1}\) characters
+of suffix \(i\) are summarized by the pair
+\[
+(\texttt{cls}[i], \texttt{cls}[i + 2^k]).
+\]
+
+So sorting suffixes by their first \(2^{k+1}\) characters becomes sorting pairs of small integers. After enough rounds,
+the compared length exceeds the string length, so the full suffix order is known.
+
+\paragraph{Why LCP appears naturally.}
+Once suffixes are sorted, repeated-substring questions are local because two suffixes with a long common prefix must sit
+next to each other in suffix-array order. That is why the LCP array is almost always built together with \(\texttt{sa}\).
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Count the number of distinct substrings of a string \(s\).
+
+\paragraph{Why naive fails.}
+There are \(O(n^2)\) substrings, and even hashing all of them is usually too expensive at \(n = 2 \cdot 10^5\).
+
+\paragraph{Key observation.}
+Suffix \(s[sa[i] \dots n-1]\) contributes all of its prefixes as substrings. That is
+\[
+n - sa[i]
+\]
+substrings in total. But the first \(\texttt{lcp}[i-1]\) of them were already seen in the previous suffix.
+
+\paragraph{Therefore}
+\[
+\text{distinct substrings}
+=
+\sum_i (n - sa[i]) - \sum_i lcp[i].
+\]
+
+\paragraph{Why only adjacent LCPs matter.}
+In sorted order, the largest already-seen common prefix of the current suffix is always realized by one of its
+neighbors, so subtracting adjacent LCPs removes exactly the duplicates introduced by ordering.
+
+\section*{Implementation Reasoning}
+
+The implementation has three moving parts:
+
+\begin{itemize}
+  \item append one unique terminator smaller than all real characters,
+  \item build \(\texttt{sa}\) with the doubling method,
+  \item build \(\texttt{lcp}\) with Kasai's linear scan.
+\end{itemize}
+
+Two practical details matter a lot:
+
+\begin{itemize}
+  \item the terminator ensures no suffix is a prefix of another without a clean ordering,
+  \item \(\texttt{lcp[i]}\) belongs to adjacent suffixes \(\texttt{sa[i]}\) and \(\texttt{sa[i+1]}\), not to original
+  string positions.
+\end{itemize}
+
+The code returns both arrays and includes a distinct-substring application function.
 
 \section*{Correctness Intuition}
 
-After round \(k\), the class ids correctly describe the order of all length-\(2^k\) prefixes. Sorting the pair
-\((class[i], class[i + 2^k])\) is therefore exactly sorting the first \(2^{k+1}\) characters. Once the compared length
-exceeds the string length, the order is the full suffix order.
+The doubling invariant is the real proof:
+
+\begin{quote}
+After round \(k\), the class array correctly ranks all prefixes of length \(2^k\).
+\end{quote}
+
+Sorting pairs of those classes therefore sorts prefixes of length \(2^{k+1}\). Once the compared length covers the
+whole suffixes, the order is final.
+
+Kasai's algorithm is linear because its matched prefix length only decreases by at most one between consecutive starting
+positions.
 
 \section*{Complexity Analysis}
 
-The doubling implementation is \(O(n \log n)\), and Kasai's LCP construction is \(O(n)\).
-
-\section*{Implementation}
-
-The code returns both:
-
 \begin{itemize}
-  \item \texttt{sa},
-  \item \texttt{lcp}.
+  \item suffix array by doubling: \(O(n \log n)\),
+  \item LCP by Kasai: \(O(n)\),
+  \item memory: \(O(n)\).
 \end{itemize}
-
-That pair is enough for most contest uses of the suffix array.
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Forgetting to append a unique terminator smaller than all real characters.
-  \item Using a suffix array when a simpler KMP, Z-function, or hash-based solution already works.
-  \item Misaligning the LCP array: \(\texttt{lcp[i]}\) belongs to adjacent suffixes in suffix-array order, not original order.
+  \item Forgetting the unique terminator.
+  \item Misaligning \(\texttt{lcp}\) with suffix-array order.
+  \item Using suffix array when the real need is online substring extension, which is more natural for suffix automaton.
+  \item Assuming arbitrary substring LCP queries are free without adding an RMQ layer over \(\texttt{lcp}\).
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Sparse table or RMQ over LCP for fast LCP queries between arbitrary suffixes.
-  \item Suffix automaton when online extension or substring counting is more natural.
-  \item SA-IS or linear-time construction, which is powerful but often unnecessary in contest code.
+  \item Add RMQ over \(\texttt{lcp}\) for fast LCP queries between arbitrary suffixes.
+  \item Use suffix automaton when the string grows online or substring occurrence aggregation is more natural.
+  \item SA-IS gives linear construction, but the contest constant and implementation complexity are much higher.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
   \item Count distinct substrings.
-  \item Find the lexicographically smallest rotation.
-  \item Pattern lookup and repeated-substring tasks using SA and LCP.
+  \item Find the longest repeated substring.
+  \item Pattern existence and lexicographic substring queries on a fixed string.
 \end{itemize}
 
 \section*{References}
@@ -87,5 +156,5 @@ That pair is enough for most contest uses of the suffix array.
 \begin{itemize}
   \item \href{https://cp-algorithms.com/string/suffix-array.html}{cp-algorithms: Suffix Array}.
   \item \href{https://usaco.guide/adv/suffix-array?lang=cpp}{USACO Guide: Suffix Array}.
-  \item \href{https://codeforces.com/catalog?locale=en}{Codeforces Catalog}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
 \end{itemize}

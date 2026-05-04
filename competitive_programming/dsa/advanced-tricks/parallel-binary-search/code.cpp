@@ -1,3 +1,7 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
 struct Fenwick {
     int n;
     vector<long long> bit;
@@ -8,14 +12,14 @@ struct Fenwick {
         for (; idx <= n; idx += idx & -idx) bit[idx] += delta;
     }
 
-    long long sum_prefix(int idx) const {
+    long long prefix_sum(int idx) const {
         long long result = 0;
         for (; idx > 0; idx -= idx & -idx) result += bit[idx];
         return result;
     }
 
     long long range_sum(int l, int r) const {
-        return sum_prefix(r) - sum_prefix(l - 1);
+        return prefix_sum(r) - prefix_sum(l - 1);
     }
 };
 
@@ -41,9 +45,7 @@ void solve_parallel_bs(
 ) {
     if (queries.empty()) return;
     if (left_update == right_update) {
-        for (const auto& query : queries) {
-            answer[query.id] = left_update;
-        }
+        for (const auto& query : queries) answer[query.id] = left_update;
         return;
     }
 
@@ -72,7 +74,8 @@ void solve_parallel_bs(
     solve_parallel_bs(mid + 1, right_update, go_right, updates, fw, answer);
 }
 
-// updates is 1-indexed. Add a dummy no-op update at index m + 1 to represent "never".
+// Example application:
+// updates is 1-indexed and updates.back() may be a dummy no-op used to represent "never reached".
 vector<int> first_time_range_sum_reaches_target(
     int n,
     const vector<PointUpdate>& updates,

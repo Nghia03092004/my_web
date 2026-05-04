@@ -1,110 +1,149 @@
 \section*{Overview}
 
-Parallel binary search is the offline version of ``binary search on answer'' for many queries at once. Instead of
-running a separate binary search for every query and rebuilding the data structure every time, it tests all queries at
-the same midpoint together, partitions them, and recurses.
+Parallel binary search is the offline version of binary search on answer for many queries at once. The core idea is that
+queries sharing the same midpoint should also share the data-structure work needed to test that midpoint.
 
-\section*{When to Use It}
+\section*{Problem-Driven Motivation}
 
-Use it when:
-
-\begin{itemize}
-  \item each query asks for the first time / first index / smallest answer where a monotone condition becomes true,
-  \item all updates happen on a timeline or ordered list,
-  \item queries can be checked by applying a prefix of updates to some data structure,
-  \item the whole problem is offline.
-\end{itemize}
-
-\section*{Core Idea}
-
-Suppose updates are numbered \(1 \ldots m\), and query \(q\) asks for the smallest time \(t\) such that
-\(\texttt{check}(q, t)\) is true. For one recursion node covering \([L, R]\):
+Suppose there are:
 
 \begin{itemize}
-  \item apply updates \(L \ldots M\), where \(M = \lfloor (L+R)/2 \rfloor\),
-  \item test every active query at time \(M\),
-  \item send satisfied queries left,
-  \item send unsatisfied queries right.
+  \item updates indexed by time \(1 \dots m\),
+  \item many queries asking for the earliest time when some monotone condition becomes true.
 \end{itemize}
 
-If going right, many problems let you subtract the contribution already seen in \(L \ldots M\), which keeps the query
-state small.
+If I run a separate binary search for each query, I repeatedly rebuild the same partial data structure for the same
+midpoints. The asymptotic bottleneck is not the binary search itself. It is the wasted duplication across queries.
+
+\section*{Recognition Pattern}
+
+Parallel binary search is a strong fit when:
+
+\begin{itemize}
+  \item every query asks for a first true / earliest time / smallest index,
+  \item the predicate is monotone over an ordered list of updates,
+  \item queries are offline,
+  \item a prefix of updates can be applied to one reusable checker structure.
+\end{itemize}
+
+Typical signals are:
+
+\begin{itemize}
+  \item earliest update when a threshold is reached,
+  \item first time two nodes become connected,
+  \item offline dynamic processes with many monotone threshold queries.
+\end{itemize}
+
+\section*{Derivation}
+
+For one query, binary search maintains an interval of candidate answers. For many queries, do the same, but batch all
+queries that currently test the same midpoint.
+
+At one recursion interval \([L,R]\):
+
+\begin{itemize}
+  \item let \(M = \lfloor(L+R)/2\rfloor\),
+  \item apply updates \(L \dots M\) to the checker,
+  \item test all currently active queries at time \(M\),
+  \item send true queries to the left half,
+  \item send false queries to the right half.
+\end{itemize}
+
+The important structural saving is that updates \(L \dots M\) are applied \emph{once for the whole batch}, not once per
+query.
 
 \includegraphics[width=\textwidth]{figures/timeline-batching.svg}
-
-\section*{Key Insight}
-
-The midpoint is shared. That is where the speedup comes from. If \(10^5\) queries all ask for the earliest time when a
-Fenwick-tree condition becomes true, you do \emph{one} Fenwick build for the midpoint batch, not \(10^5\) separate
-builds.
 
 \section*{Worked Problem}
 
 \paragraph{Problem.}
-There are \(m\) positive point updates of the form ``add \(v\) to position \(p\)''. Each query gives \([l, r]\) and a
-target \(k\), and asks for the earliest update index after which the range sum on \([l, r]\) is at least \(k\).
+There are positive point updates \((pos, delta)\). Each query gives \([l,r]\) and a target \(k\), and asks for the
+earliest update index after which the range sum on \([l,r]\) is at least \(k\).
 
-\paragraph{Why parallel binary search fits.}
-The predicate ``after the first \(t\) updates, range sum on \([l, r]\) is at least \(k\)'' is monotone in \(t\).
+\paragraph{Why naive fails.}
+If there are \(10^5\) queries and \(10^5\) updates, running one Fenwick-based binary search per query repeats the same
+prefix-update work too many times.
 
-\paragraph{Algorithm outline.}
+\paragraph{Why the predicate is monotone.}
+All deltas are positive, so range sums only increase as time advances. Once the target is reached, it stays reached.
+
+\paragraph{Key recursion invariant.}
+For a query currently inside recursion interval \([L,R]\), its stored \texttt{need} means:
+
+\begin{quote}
+How much more sum is still needed after all updates strictly before \(L\) have already been conceptually accounted for.
+\end{quote}
+
+\paragraph{What happens at midpoint \(M\).}
+Apply updates \(L \dots M\), measure the gained range sum.
 
 \begin{itemize}
-  \item Recurse on update-index intervals.
-  \item At midpoint \(M\), apply updates \(L \ldots M\) into a Fenwick tree.
-  \item For each query, compute the current range sum.
-  \item If the sum is already enough, the answer is in the left half.
-  \item Otherwise subtract that sum from the remaining target and continue in the right half.
+  \item If gained \(\ge \texttt{need}\), the answer lies in \([L,M]\).
+  \item Otherwise subtract the gained amount from \texttt{need} and recurse into \([M+1,R]\).
 \end{itemize}
+
+This ``remaining need'' trick is what keeps right-recursion states small and exact.
+
+\section*{Implementation Reasoning}
+
+The implementation is easiest to trust when organized around three pieces:
+
+\begin{itemize}
+  \item one checker structure, here a Fenwick tree,
+  \item one recursive function over update intervals,
+  \item one query struct that stores its remaining target.
+\end{itemize}
+
+The data structure must be restored after testing the midpoint batch. In the Fenwick version that simply means undoing
+the updates that were applied for the midpoint.
+
+The code also uses the common dummy-update convention: if a query never becomes true, its answer can be left at the
+dummy index and interpreted afterward.
 
 \section*{Correctness Intuition}
 
-Every query keeps an invariant: its remaining target is the amount still needed after all updates strictly before the
-current recursion interval have been accounted for. Midpoint testing is therefore exact, and monotonicity guarantees
-that the answer lies entirely in one half.
+Each query moves left or right exactly like an ordinary binary search would, except that many queries share the same
+midpoint test. Because the remaining-target invariant is updated correctly, the query state after moving right is exactly
+the state it would have had if all earlier updates had been permanently removed from the search space.
 
 \section*{Complexity Analysis}
 
-If the checker uses a data structure with update/query cost \(T\), then the usual complexity is
+If the checker supports one update or one query in time \(T\), the total complexity is usually
 \[
-O((m + q)\log m \cdot T).
+O((m+q)\log m \cdot T).
 \]
-For a Fenwick or segment tree, this becomes \(O((m + q)\log m \log n)\).
 
-\section*{Implementation}
-
-The reference code solves the point-update, range-sum threshold problem above with a Fenwick tree and recursive query
-partitioning.
+For a Fenwick tree this is \(O((m+q)\log m \log n)\).
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Using it on an online problem. The whole method needs all queries in advance.
-  \item Forgetting to undo or rebuild the data structure between recursion branches.
-  \item Applying it when the predicate is not monotone over the searched timeline.
-  \item Mutating the query state incorrectly when moving to the right half.
+  \item Using the method on an online problem.
+  \item Forgetting that the predicate must be monotone.
+  \item Mutating the query state incorrectly when sending it to the right half.
+  \item Failing to undo midpoint updates before returning from recursion.
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Segment tree or DSU based checkers instead of Fenwick trees.
-  \item ``First edge when two nodes become connected'' style connectivity queries.
-  \item Using iterative bucket rounds instead of recursive divide-and-conquer.
+  \item Segment trees, DSU, or custom checkers can replace Fenwick trees.
+  \item Some implementations use iterative bucket rounds instead of explicit recursion.
+  \item If the condition is not monotone in time, parallel binary search is invalid.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
-  \item Earliest update when a prefix, suffix, or range sum reaches a target.
-  \item First time a connectivity or component-size condition becomes true offline.
-  \item Batched threshold queries over an ordered stream of events.
+  \item Earliest update when a range sum reaches a threshold.
+  \item First time two vertices become connected under edge additions.
+  \item Batched monotone threshold queries on an ordered event stream.
 \end{itemize}
 
 \section*{References}
 
 \begin{itemize}
-  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
-  \item \href{https://oiwiki.com/misc/parallel-binsearch/}{OI Wiki: Parallel Binary Search}.
   \item \href{https://usaco.guide/plat/parallel-binsearch}{USACO Guide: Parallel Binary Search}.
+  \item \href{https://oiwiki.com/misc/parallel-binsearch/}{OI Wiki: Parallel Binary Search}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
 \end{itemize}

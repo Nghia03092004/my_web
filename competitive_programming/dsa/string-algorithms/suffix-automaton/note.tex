@@ -1,85 +1,141 @@
 \section*{Overview}
 
-Suffix automaton is the suffix structure I want when the string is built online or when substring-state transitions feel
-more natural than suffix-array order. It represents all substrings of one string in a DAG with only \(O(n)\) states.
+Suffix automaton is the string structure I use when substring states matter more than lexicographic order. It stores all
+substrings of one string in a DAG of only \(O(n)\) states and is especially strong when the string is processed online.
 
-\section*{When to Use It}
+\section*{Problem-Driven Motivation}
 
-Use a suffix automaton when:
-
-\begin{itemize}
-  \item distinct substrings, occurrence counts, or longest common substring style queries appear,
-  \item the string is processed left to right,
-  \item an automaton over substring states feels easier than sorting suffixes.
-\end{itemize}
-
-\section*{Core Idea}
-
-Each state represents an equivalence class of substrings that share the same set of ending positions. The automaton is
-extended one character at a time, and occasionally a clone state is created to preserve the correct suffix-link and
-transition structure.
-
-\section*{Key Insight}
-
-The suffix link points to the largest proper suffix class that still matters after extending the string. That is why the
-automaton remains linear even though it compactly represents every substring.
-
-\section*{Operations / Main Technique}
+Typical contest questions are:
 
 \begin{itemize}
-  \item extend by one character,
-  \item follow transitions to test whether a pattern is a substring,
-  \item use \(\texttt{len[state] - len[link[state]]}\) to count distinct substrings,
-  \item propagate end-position counts in topological length order for occurrence queries.
+  \item how many distinct substrings does the string have,
+  \item how many times does a pattern occur as a substring,
+  \item what is the longest common substring with another string,
+  \item can the text be extended online while maintaining substring information.
 \end{itemize}
 
-\paragraph{Worked example.}
-Every time a new character is appended, all new substrings are exactly the suffixes ending at that new position. The
-automaton extension adds those efficiently without rebuilding older states.
+Trying to treat every substring separately is hopeless because there are \(O(n^2)\) of them. The useful compression is
+to group substrings that behave the same with respect to ending positions.
+
+\section*{Recognition Pattern}
+
+Suffix automaton is a strong fit when:
+
+\begin{itemize}
+  \item the base string is scanned left to right,
+  \item the queries are about substrings as automaton states, not about lexicographic suffix order,
+  \item distinct-substring counting or occurrence aggregation is central,
+  \item online extension is valuable.
+\end{itemize}
+
+If the problem is mainly about lexicographic order or suffix sorting, suffix array is often the cleaner tool.
+
+\section*{Derivation}
+
+The core abstraction is the \(\texttt{endpos}\) equivalence class:
+
+\begin{quote}
+Two substrings belong to the same state if they end at exactly the same set of positions in the full string.
+\end{quote}
+
+Each state stores:
+
+\begin{itemize}
+  \item \texttt{len[v]}: the maximum length in the class,
+  \item \texttt{link[v]}: the suffix link to the largest proper suffix class,
+  \item transitions by characters.
+\end{itemize}
+
+When appending one new character:
+
+\begin{itemize}
+  \item one new terminal state is created,
+  \item suffix links are followed backward to add missing transitions,
+  \item sometimes an existing state must be cloned because one old equivalence class actually splits into two classes.
+\end{itemize}
+
+The clone is the subtle part. It appears exactly when an old state would otherwise claim a shortest representative that is
+too long, breaking the automaton invariant.
+
+\section*{Worked Problem}
+
+\paragraph{Problem.}
+Build one text \(s\), then answer many pattern queries asking how many times each pattern appears in \(s\).
+
+\paragraph{Why naive fails.}
+Running a separate linear scan for every pattern is too slow when both the text and the query count are large.
+
+\paragraph{Step 1: build the suffix automaton of the text.}
+After processing the whole text, every substring corresponds to some path from the start state.
+
+\paragraph{Step 2: propagate occurrence counts.}
+While extending, each new terminal state contributes one end position. After building the automaton, propagate those
+counts backward in decreasing \(\texttt{len}\) order along suffix links.
+
+\paragraph{Why this propagation is correct.}
+If state \(v\) has suffix link \(p\), then every occurrence represented by \(v\) also contributes to the suffix-class
+represented by \(p\). So counts must flow from longer states to shorter suffix-link parents.
+
+\paragraph{Step 3: answer pattern queries.}
+Walk the pattern along automaton transitions. If a transition is missing, the pattern is absent. Otherwise the final
+state's propagated count is exactly the number of occurrences.
+
+\section*{Implementation Reasoning}
+
+The meanings of the fields matter more than the code shape:
+
+\begin{itemize}
+  \item \texttt{len[v]} tells the largest length in the state,
+  \item \texttt{len[link[v]] + 1 \ldots len[v]} is the full range of lengths represented by the state,
+  \item \texttt{occ[v]} counts end positions only after the propagation pass.
+\end{itemize}
+
+The clone step copies transitions and the suffix link, but resets \texttt{occ} to zero because the clone is a structural
+split, not a new end position.
 
 \section*{Correctness Intuition}
 
-The construction maintains the smallest automaton that recognizes all suffixes of the processed prefix, which is enough
-to recognize all substrings as well. Clone states appear only when an old state needs to be split into two equivalence
-classes with different longest-length behavior.
+The automaton stays minimal because states are exactly the end-position equivalence classes. Appending one character only
+creates one genuinely new family of substrings: the suffixes ending at the new last position. Everything else is reused,
+except when a previous state must be cloned to preserve correct suffix-link structure.
+
+The formula
+\[
+\sum_{v \ne root} \bigl(len[v] - len[link[v]]\bigr)
+\]
+counts distinct substrings because each state contributes exactly the lengths that appear first in that state and in no
+shorter suffix-link ancestor.
 
 \section*{Complexity Analysis}
 
-The suffix automaton is built in \(O(n)\) time and memory for a fixed alphabet representation that supports \(O(1)\)
-transitions on average or with arrays.
-
-\section*{Implementation}
-
-The code supports:
-
 \begin{itemize}
-  \item online extension,
-  \item substring existence checks,
-  \item counting distinct substrings,
-  \item occurrence counts after one propagation pass.
+  \item build: \(O(n)\) states and transitions for a fixed alphabet representation,
+  \item occurrence propagation: \(O(n)\),
+  \item one pattern existence or occurrence query: \(O(|pattern|)\).
 \end{itemize}
 
 \section*{Common Pitfalls}
 
 \begin{itemize}
-  \item Getting clone-state initialization wrong.
-  \item Forgetting that occurrence counts need a later propagation step.
-  \item Using a suffix automaton when the problem is really about lexicographic order, where suffix array fits better.
+  \item Initializing clone states incorrectly.
+  \item Forgetting that \texttt{occ} is not ready until the propagation pass is done.
+  \item Using suffix automaton for lexicographic tasks that are simpler with suffix array.
+  \item Hard-coding an alphabet that does not match the problem.
 \end{itemize}
 
-\section*{Variants / Extensions}
+\section*{Variants and Failure Modes}
 
 \begin{itemize}
-  \item Longest common substring between strings.
-  \item Build the suffix-link tree for further DP.
-  \item Palindromic tree when the structure is about palindromes rather than arbitrary substrings.
+  \item Longest common substring can be solved by walking a second string over the automaton.
+  \item The suffix-link tree supports additional DP after the automaton is built.
+  \item If the problem is about palindromes, palindromic tree is the right analog instead.
 \end{itemize}
 
 \section*{Practice Problems}
 
 \begin{itemize}
   \item Count distinct substrings.
-  \item Query whether many patterns are substrings.
+  \item Count occurrences of many patterns in one text.
   \item Longest common substring or repeated-substring tasks.
 \end{itemize}
 
@@ -88,5 +144,5 @@ The code supports:
 \begin{itemize}
   \item \href{https://cp-algorithms.com/string/suffix-automaton.html}{cp-algorithms: Suffix Automaton}.
   \item \href{https://usaco.guide/adv/string-suffix}{USACO Guide: String Suffix Structures}.
-  \item \href{https://codeforces.com/catalog?locale=en}{Codeforces Catalog}.
+  \item \href{https://codeforces.com/catalog}{Codeforces Catalog}.
 \end{itemize}
