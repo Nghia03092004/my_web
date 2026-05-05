@@ -85,7 +85,7 @@ let categoryRecordsPromise: Promise<CsesCategoryRecord[]> | undefined;
 const sourcePromiseCache = new Map<string, Promise<CsesProblemSourceBundle>>();
 
 function getRelativePath(absolutePath: string) {
-	return path.relative(process.cwd(), absolutePath);
+	return path.relative(process.cwd(), absolutePath).replaceAll('\\', '/');
 }
 
 function getAssetKey(absolutePath: string) {
