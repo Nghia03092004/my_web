@@ -1,0 +1,11 @@
+{
+  "title": "Koko Eating Bananas",
+  "category": "Binary Search",
+  "slug": "koko-eating-bananas",
+  "officialUrl": "https://leetcode.com/problems/koko-eating-bananas/",
+  "difficulty": "Medium",
+  "tags": ["binary search", "binary search on answer", "feasibility check"],
+  "status": "solved",
+  "order": 1,
+  "summary": "Find the minimum eating speed that still finishes every pile before the deadline."
+}

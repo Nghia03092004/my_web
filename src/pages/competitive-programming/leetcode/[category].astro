@@ -1,0 +1,124 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { formatDate } from '../../../lib/content';
+import { withBase } from '../../../lib/paths';
+import {
+	getLeetcodeCategoryRecord,
+	getLeetcodeActiveCategoryRecords,
+	getLeetcodeArchiveMetadata,
+	getLeetcodeDifficultyTone,
+	getLeetcodeRoutePath,
+} from '../../../features/competitive-programming-leetcode/lib/leetcode';
+
+export async function getStaticPaths() {
+	const categories = await getLeetcodeActiveCategoryRecords();
+
+	return categories.map((category) => ({
+		params: {
+			category: category.slug,
+		},
+	}));
+}
+
+const categorySlug = Astro.params.category;
+if (!categorySlug) {
+	throw new Error('Missing LeetCode category slug.');
+}
+
+const [metadata, category] = await Promise.all([
+	getLeetcodeArchiveMetadata(),
+	getLeetcodeCategoryRecord(categorySlug),
+]);
+
+if (!category || category.problemCount === 0) {
+	throw new Error(`Unknown or empty LeetCode category: ${categorySlug}.`);
+}
+
+const uniqueTagCount = category.tags.length;
+const difficultyBreakdown = `${category.difficultyCounts.Easy} easy / ${category.difficultyCounts.Medium} medium / ${category.difficultyCounts.Hard} hard`;
+---
+
+<BaseLayout title={category.title} description={category.description}>
+	<section class="page-intro cp-intro">
+		<span class="eyebrow">LeetCode Solutions</span>
+		<h1>{category.title}</h1>
+		<p>
+			{category.description} The focus here is {category.focus}. {metadata.statementPolicy}
+		</p>
+		<div class="archive-summary">
+			<div class="archive-summary__item">
+				<strong>{category.problemCount}</strong>
+				<span>published solutions</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{uniqueTagCount}</strong>
+				<span>distinct tags</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{difficultyBreakdown}</strong>
+				<span>difficulty mix</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{category.latestUpdated ? formatDate(category.latestUpdated) : 'n/a'}</strong>
+				<span>most recently updated page</span>
+			</div>
+		</div>
+		<div class="chip-row">
+			<a class="button" href={withBase(getLeetcodeRoutePath())}>Back to LeetCode</a>
+			<a class="button button--ghost" href={withBase('/competitive-programming')}>
+				All competitive programming
+			</a>
+			<a class="button button--ghost" href="https://leetcode.com/problemset/">
+				Official LeetCode
+			</a>
+		</div>
+	</section>
+
+	<section class="section-panel">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Problems</span>
+				<h2>Published pages in this category</h2>
+				<p>
+					Every page keeps the problem summary, recognition pattern, reasoning, pitfalls, and the exact C++
+					source used on the site.
+				</p>
+			</div>
+		</div>
+
+		<div class="problem-grid cses-problem-grid">
+			{
+				category.records.map((record) => (
+					<article class="card cses-problem-card" data-tone={getLeetcodeDifficultyTone(record.difficulty)}>
+						<div class="cses-problem-card__header">
+							<div>
+								<span class="metric">
+									{record.categoryTitle} #{String(record.order).padStart(2, '0')}
+								</span>
+								<h3>{record.title}</h3>
+							</div>
+							<span class="chip" data-tone={getLeetcodeDifficultyTone(record.difficulty)}>
+								{record.difficulty}
+							</span>
+						</div>
+						<p>{record.summary}</p>
+						<div class="chip-row cses-card__chips">
+							<span class="chip" data-tone="cool">Solved</span>
+							{record.tags.map((tag) => (
+								<span class="chip">{tag}</span>
+							))}
+						</div>
+						<div class="cses-card__actions">
+							<a class="button" href={withBase(getLeetcodeRoutePath(record.categorySlug, record.slug))}>
+								Open solution
+							</a>
+							<a class="button button--ghost" href={record.officialUrl}>
+								Official problem
+							</a>
+						</div>
+					</article>
+				))
+			}
+		</div>
+	</section>
+</BaseLayout>

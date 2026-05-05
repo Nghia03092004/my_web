@@ -1,0 +1,55 @@
+\section{Problem Summary}
+Given an integer array, return all distinct triplets whose sum is zero.
+
+The difficulty is not only finding triplets fast enough. You also need to avoid duplicate answers when the input contains repeated values.
+
+\section{Recognition Pattern}
+This is a \textbf{sorting + two pointers} problem.
+
+In interviews, recognize it when:
+\begin{itemize}
+\item you need unique pairs or triplets
+\item the order of the array does not matter
+\item sorting lets you reason about sums moving left or right
+\item duplicate handling is part of the difficulty
+\end{itemize}
+
+\section{Key Idea}
+Sort the array first. Then fix one index \(i\) and solve a two-sum problem on the suffix \([i + 1, n - 1]\) with two pointers.
+
+Because the array is sorted:
+\begin{itemize}
+\item if the current sum is too small, move the left pointer right
+\item if the current sum is too large, move the right pointer left
+\item after finding a valid triplet, skip duplicates on both sides
+\end{itemize}
+
+Sorting turns duplicate control from a bookkeeping mess into a local pointer rule.
+
+\section{Step-by-step Reasoning}
+The direct brute-force solution tries every triple, which costs \(O(n^3)\).
+
+A better but still clumsy idea is to fix one number and use a hash set for the remaining two-sum search. That reduces the time to \(O(n^2)\), but keeping the output unique becomes awkward.
+
+Sorting improves both issues at once. Once the numbers are ordered, moving a pointer has a predictable effect on the sum, and duplicate values sit next to each other, so they are easy to skip.
+
+That is the key transition: instead of treating uniqueness as a separate cleanup pass, build it into the scan itself.
+
+\section{Complexity}
+\begin{itemize}
+\item Time: \(O(n^2)\) overall
+\item Space: \(O(1)\) auxiliary, ignoring the output and the sort implementation details
+\end{itemize}
+
+\section{Common Pitfalls}
+\begin{itemize}
+\item Forgetting to skip duplicate anchors creates repeated triplets.
+\item After finding one triplet, failing to skip duplicate left or right values also creates repeats.
+\item Using the two-pointer pattern on an unsorted array does not work.
+\item Missing the early stop when the anchor becomes positive wastes time, because three positive numbers cannot sum to zero in a sorted array.
+\end{itemize}
+
+\section{Variants / Follow-ups}
+This pattern generalizes directly to \textbf{3Sum Closest}, \textbf{4Sum}, and the broader \(k\)-sum family.
+
+The main reusable lesson is that sorting is often worth it when uniqueness and pointer movement need to be handled at the same time.

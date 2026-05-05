@@ -1,0 +1,11 @@
+{
+  "title": "Coin Change",
+  "category": "Dynamic Programming",
+  "slug": "coin-change",
+  "officialUrl": "https://leetcode.com/problems/coin-change/",
+  "difficulty": "Medium",
+  "tags": ["dynamic programming", "unbounded knapsack", "minimum transitions"],
+  "status": "solved",
+  "order": 1,
+  "summary": "Compute the fewest reusable coins needed to reach the target amount, or report that it is impossible."
+}

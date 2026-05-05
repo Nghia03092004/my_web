@@ -1,0 +1,140 @@
+{
+  "title": "LeetCode Solutions",
+  "description": "Curated LeetCode write-ups with original summaries, pattern recognition, and clean C++ implementations aimed at interview preparation.",
+  "statementPolicy": "Official LeetCode problems are linked on every page instead of being mirrored here.",
+  "positioning": "This branch sits between the DSA notebook and the harder contest archives: the emphasis is clarity, reusable patterns, and recruiter-friendly code.",
+  "startHere": {
+    "category": "arrays",
+    "slug": "two-sum",
+    "label": "Two Sum",
+    "description": "Start with the complement lookup pattern, then move into sorted-pair and sliding-window variants."
+  },
+  "learningPath": [
+    {
+      "title": "Build the scan baseline",
+      "description": "Start with one-pass array scans, then learn when sorting turns a quadratic search into a pointer walk.",
+      "categories": ["arrays", "two-pointers", "sliding-window"]
+    },
+    {
+      "title": "Add decision patterns",
+      "description": "Learn the two big interview accelerators: monotonic stacks for next-greater style queries and binary search on a monotone answer.",
+      "categories": ["stack", "binary-search"]
+    },
+    {
+      "title": "Move into traversal",
+      "description": "Practice recursive and graph traversal patterns after the pointer-based problems feel routine.",
+      "categories": ["tree", "graph"]
+    },
+    {
+      "title": "Finish with optimization",
+      "description": "Dynamic programming becomes much easier once the earlier recognition patterns are stable.",
+      "categories": ["dynamic-programming"]
+    }
+  ],
+  "categories": [
+    {
+      "slug": "arrays",
+      "title": "Arrays",
+      "description": "Hash-map lookups, prefix-style scans, and the baseline decisions that show up in almost every interview loop.",
+      "focus": "one-pass scans and complement lookups",
+      "order": 1,
+      "tone": "cool"
+    },
+    {
+      "slug": "two-pointers",
+      "title": "Two Pointers",
+      "description": "Sorted-array pairing, duplicate control, and shrinking a search space from both ends.",
+      "focus": "sorted scans and duplicate handling",
+      "order": 2,
+      "tone": "warm"
+    },
+    {
+      "slug": "sliding-window",
+      "title": "Sliding Window",
+      "description": "Grow and shrink a window while maintaining an invariant instead of restarting every substring check.",
+      "focus": "window invariants and frequency tracking",
+      "order": 3,
+      "tone": "olive"
+    },
+    {
+      "slug": "binary-search",
+      "title": "Binary Search",
+      "description": "Classic sorted-array search plus binary search on a monotone feasibility answer.",
+      "focus": "monotone predicates and answer search",
+      "order": 4,
+      "tone": "cool"
+    },
+    {
+      "slug": "stack",
+      "title": "Stack",
+      "description": "Monotonic structures and deferred answers for next-greater and range-style problems.",
+      "focus": "monotonic stack reasoning",
+      "order": 5,
+      "tone": "warm"
+    },
+    {
+      "slug": "heap",
+      "title": "Heap",
+      "description": "Top-k selection, scheduling, and priority-based state expansion.",
+      "focus": "priority queues and partial ordering",
+      "order": 6,
+      "tone": "expert"
+    },
+    {
+      "slug": "graph",
+      "title": "Graph",
+      "description": "Connectivity, traversal, components, and graph state propagation.",
+      "focus": "DFS, BFS, and component thinking",
+      "order": 7,
+      "tone": "olive"
+    },
+    {
+      "slug": "tree",
+      "title": "Tree",
+      "description": "Recursive structure, subtree information, and ancestor-style reasoning.",
+      "focus": "postorder recursion and tree invariants",
+      "order": 8,
+      "tone": "cool"
+    },
+    {
+      "slug": "dynamic-programming",
+      "title": "Dynamic Programming",
+      "description": "State design, transition choices, and subproblem reuse without overcomplicating the implementation.",
+      "focus": "state compression and transition design",
+      "order": 9,
+      "tone": "warm"
+    },
+    {
+      "slug": "backtracking",
+      "title": "Backtracking",
+      "description": "Search trees with pruning, construction order, and duplicate control.",
+      "focus": "choice trees and pruning",
+      "order": 10,
+      "tone": "olive"
+    },
+    {
+      "slug": "greedy",
+      "title": "Greedy",
+      "description": "Local decisions that stay globally safe because the invariant is strong enough.",
+      "focus": "exchange arguments and interval choices",
+      "order": 11,
+      "tone": "cool"
+    },
+    {
+      "slug": "bitmask",
+      "title": "Bitmask",
+      "description": "Subset state, compact flags, and brute-force acceleration through representation.",
+      "focus": "subset enumeration and state compression",
+      "order": 12,
+      "tone": "expert"
+    },
+    {
+      "slug": "advanced",
+      "title": "Advanced",
+      "description": "Design-heavy problems that combine multiple patterns or ask for a stronger data structure.",
+      "focus": "multi-pattern design questions",
+      "order": 13,
+      "tone": "expert"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Lowest Common Ancestor of a Binary Tree",
+  "category": "Tree",
+  "slug": "lowest-common-ancestor-of-a-binary-tree",
+  "officialUrl": "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/",
+  "difficulty": "Medium",
+  "tags": ["tree", "dfs", "lowest common ancestor"],
+  "status": "solved",
+  "order": 1,
+  "summary": "Find the lowest node in a binary tree whose subtree contains both target nodes."
+}

@@ -1,0 +1,53 @@
+\section{Problem Summary}
+For each day, determine how many days you must wait until a warmer temperature appears. If no warmer day exists, the answer for that position is zero.
+
+This is not just a comparison problem. Each day is waiting for its \emph{next greater element to the right}.
+
+\section{Recognition Pattern}
+This is a \textbf{monotonic stack} problem.
+
+In interviews, recognize it when:
+\begin{itemize}
+\item each position wants the next greater or smaller value
+\item the answer depends on the nearest qualifying element to the left or right
+\item a brute-force scan would repeatedly revisit the same unresolved elements
+\end{itemize}
+
+\section{Key Idea}
+Store indices of days that have not found a warmer future day yet.
+
+Keep the stack in decreasing temperature order. When a new temperature arrives:
+\begin{itemize}
+\item while it is warmer than the day on top of the stack, resolve that older day
+\item the distance is the current index minus the stored index
+\item then push the current day as a new unresolved candidate
+\end{itemize}
+
+Each index is pushed once and popped once, so the total work stays linear.
+
+\section{Step-by-step Reasoning}
+The brute-force solution checks every later day for every index, which costs \(O(n^2)\).
+
+The wasted work comes from repeatedly scanning over days that are still unresolved. A stack fixes that by keeping exactly those unresolved candidates in one place.
+
+The decreasing-order invariant is what makes the stack useful. If the current day is not warmer than the top, then it is also not warm enough to resolve anything below that top, so you can stop immediately.
+
+That is the main monotonic-stack pattern: keep a structural invariant so each new element resolves as much old work as it can, and no more.
+
+\section{Complexity}
+\begin{itemize}
+\item Time: \(O(n)\)
+\item Space: \(O(n)\)
+\end{itemize}
+
+\section{Common Pitfalls}
+\begin{itemize}
+\item Store indices, not temperatures. You need indices both for comparison and for computing distances.
+\item The comparison must be strict. Equal temperatures do not count as warmer days.
+\item Initialize the answer array with zeros so unresolved days naturally keep the correct default.
+\end{itemize}
+
+\section{Variants / Follow-ups}
+This same pattern appears in \textbf{Next Greater Element}, \textbf{Next Greater Element II}, \textbf{Stock Span}, and many histogram or range-boundary problems.
+
+The transferable skill is recognizing when unresolved positions should be stored in a monotone order instead of re-scanned later.

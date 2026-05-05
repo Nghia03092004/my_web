@@ -1,0 +1,45 @@
+---
+import { withBase } from '../../../lib/paths';
+
+interface LinkItem {
+	categorySlug: string;
+	categoryTitle: string;
+	slug: string;
+	title: string;
+}
+
+interface Props {
+	previous?: LinkItem;
+	next?: LinkItem;
+}
+
+const { previous, next } = Astro.props;
+
+const getHref = (item: LinkItem) => withBase(`/competitive-programming/leetcode/${item.categorySlug}/${item.slug}`);
+---
+
+{
+	previous || next ? (
+		<nav class="problem-pagination panel" aria-label="LeetCode navigation">
+			{previous ? (
+				<a class="problem-pagination__link" href={getHref(previous)} rel="prev">
+					<span class="problem-pagination__label">Previous problem</span>
+					<strong>{previous.categoryTitle}</strong>
+					<span>{previous.title}</span>
+				</a>
+			) : (
+				<div class="problem-pagination__link problem-pagination__link--empty" aria-hidden="true"></div>
+			)}
+
+			{next ? (
+				<a class="problem-pagination__link problem-pagination__link--next" href={getHref(next)} rel="next">
+					<span class="problem-pagination__label">Next problem</span>
+					<strong>{next.categoryTitle}</strong>
+					<span>{next.title}</span>
+				</a>
+			) : (
+				<div class="problem-pagination__link problem-pagination__link--empty" aria-hidden="true"></div>
+			)}
+		</nav>
+	) : null
+}

@@ -1,0 +1,240 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { formatDate } from '../../../lib/content';
+import { withBase } from '../../../lib/paths';
+import {
+	getLeetcodeActiveCategoryRecords,
+	getLeetcodeArchiveMetadata,
+	getLeetcodeArchiveSummary,
+	getLeetcodeDifficultyTone,
+	getLeetcodeProblemRecords,
+	getLeetcodeRoutePath,
+} from '../../../features/competitive-programming-leetcode/lib/leetcode';
+
+const [metadata, summary, categories, records] = await Promise.all([
+	getLeetcodeArchiveMetadata(),
+	getLeetcodeArchiveSummary(),
+	getLeetcodeActiveCategoryRecords(),
+	getLeetcodeProblemRecords(),
+]);
+const startHere = metadata.startHere
+	? records.find(
+			(record) =>
+				record.categorySlug === metadata.startHere?.category && record.slug === metadata.startHere?.slug,
+		)
+	: records[0];
+const latestEntries = [...records].sort((left, right) => right.updated.getTime() - left.updated.getTime()).slice(0, 6);
+const inactiveCategories = metadata.categories.filter(
+	(category) => !categories.some((activeCategory) => activeCategory.slug === category.slug),
+);
+const learningCategories = new Map(metadata.categories.map((category) => [category.slug, category]));
+const difficultyBreakdown = ['Easy', 'Medium', 'Hard']
+	.map((difficulty) => `${summary.difficultyCounts[difficulty]} ${difficulty.toLowerCase()}`)
+	.join(' / ');
+---
+
+<BaseLayout title="LeetCode Solutions" description={metadata.description}>
+	<section class="page-intro cp-intro">
+		<span class="eyebrow">Competitive Programming</span>
+		<h1>LeetCode Solutions</h1>
+		<p>
+			{metadata.description} {metadata.positioning} {metadata.statementPolicy}
+		</p>
+		<div class="archive-summary">
+			<div class="archive-summary__item">
+				<strong>{summary.entryCount}</strong>
+				<span>published solutions</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{summary.activeCategoryCount}</strong>
+				<span>active categories</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{difficultyBreakdown}</strong>
+				<span>difficulty mix</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{summary.latestUpdated ? formatDate(summary.latestUpdated) : 'n/a'}</strong>
+				<span>most recently updated page</span>
+			</div>
+		</div>
+		<div class="chip-row">
+			<a class="button" href={withBase('/competitive-programming')}>All competitive programming</a>
+			<a class="button button--ghost" href="https://leetcode.com/problemset/">Official LeetCode</a>
+		</div>
+	</section>
+
+	{
+		startHere ? (
+			<section class="section-panel">
+				<div class="section-heading">
+					<div>
+						<span class="section-label">Start here</span>
+						<h2>Begin with the baseline interview patterns</h2>
+						<p>
+							The first batch is intentionally small. It covers the common array, pointer, stack, traversal,
+							and DP patterns that recur in interviews.
+						</p>
+					</div>
+				</div>
+				<article class="card cses-highlight-card" data-tone={getLeetcodeDifficultyTone(startHere.difficulty)}>
+					<span class="eyebrow">{startHere.categoryTitle}</span>
+					<h3>{metadata.startHere?.label ?? startHere.title}</h3>
+					<p>{metadata.startHere?.description ?? startHere.summary}</p>
+					<div class="chip-row cses-card__chips">
+						<span class="chip" data-tone={getLeetcodeDifficultyTone(startHere.difficulty)}>
+							{startHere.difficulty}
+						</span>
+						{startHere.tags.map((tag) => (
+							<span class="chip">{tag}</span>
+						))}
+					</div>
+					<div class="cses-card__actions">
+						<a class="button" href={withBase(getLeetcodeRoutePath(startHere.categorySlug, startHere.slug))}>
+							Open the solution
+						</a>
+						<a class="button button--ghost" href={startHere.officialUrl}>
+							Official problem
+						</a>
+					</div>
+				</article>
+			</section>
+		) : null
+	}
+
+	<section class="section-panel">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Categories</span>
+				<h2>Pattern-first archive categories</h2>
+				<p>
+					Each category groups problems by the main interview pattern, not by difficulty alone. Only completed
+					write-ups appear as public category pages.
+				</p>
+			</div>
+		</div>
+
+		<div class="cp-year-grid">
+			{
+				categories.map((category) => (
+					<article class="cp-year-card cp-year-card--browse">
+						<div class="cp-year-card__topline">
+							<div>
+								<strong>{category.title}</strong>
+								<span>{category.problemCount} solved</span>
+							</div>
+							<span class="chip" data-tone={category.tone ?? 'cool'}>
+								{String(category.order).padStart(2, '0')}
+							</span>
+						</div>
+						<p class="cp-year-card__summary">{category.description}</p>
+						<ul class="cp-year-card__list">
+							<li>Focus: {category.focus}</li>
+							<li>
+								Difficulties: {category.difficultyCounts.Easy} easy / {category.difficultyCounts.Medium} medium /
+								{category.difficultyCounts.Hard} hard
+							</li>
+							{category.records.slice(0, 2).map((record) => <li>{record.title}</li>)}
+						</ul>
+						<div class="cp-year-card__actions">
+							<a class="button" href={withBase(getLeetcodeRoutePath(category.slug))}>
+								Browse category
+							</a>
+						</div>
+					</article>
+				))
+			}
+		</div>
+	</section>
+
+	<section class="section-panel">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Learning path</span>
+				<h2>One practical order to study this section</h2>
+				<p>
+					This path optimizes for transfer. Each stage builds on recognition habits from the stage before it.
+				</p>
+			</div>
+		</div>
+		<div class="cp-year-grid">
+			{
+				metadata.learningPath.map((step, index) => (
+					<article class="cp-year-card cp-year-card--browse">
+						<div class="cp-year-card__topline">
+							<div>
+								<strong>0{index + 1}</strong>
+								<span>{step.title}</span>
+							</div>
+							<span class="chip" data-tone={index < 2 ? 'olive' : index === 2 ? 'cool' : 'warm'}>
+								{step.categories.length} stage{step.categories.length === 1 ? '' : 's'}
+							</span>
+						</div>
+						<p class="cp-year-card__summary">{step.description}</p>
+						<p class="cp-content__notice">
+							{step.categories
+								.map((categorySlug) => learningCategories.get(categorySlug)?.title ?? categorySlug)
+								.join(' -> ')}
+						</p>
+					</article>
+				))
+			}
+		</div>
+	</section>
+
+	{
+		inactiveCategories.length ? (
+			<section class="section-panel">
+				<div class="section-heading">
+					<div>
+						<span class="section-label">Next branches</span>
+						<h2>Categories wired for future batches</h2>
+						<p>
+							These categories are part of the archive structure already, but they do not appear as public pages
+							until they have finished solutions.
+						</p>
+					</div>
+				</div>
+				<div class="chip-row">
+					{inactiveCategories.map((category) => (
+						<span class="chip">
+							{category.title}: {category.focus}
+						</span>
+					))}
+				</div>
+			</section>
+		) : null
+	}
+
+	<section class="section-panel section-panel--signal">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Recent additions</span>
+				<h2>Latest LeetCode solution pages</h2>
+				<p>Each page keeps the official link, the rendered explanation, and the exact C++ source on one page.</p>
+			</div>
+		</div>
+		<div class="signal-grid">
+			{
+				latestEntries.map((record, index) => (
+					<a
+						class="signal-card"
+						data-tone={getLeetcodeDifficultyTone(record.difficulty)}
+						href={withBase(getLeetcodeRoutePath(record.categorySlug, record.slug))}
+					>
+						<span class="signal-card__index">0{index + 1}</span>
+						<div>
+							<span class="eyebrow">{record.categoryTitle}</span>
+							<h3>{record.title}</h3>
+							<p>{record.summary}</p>
+						</div>
+						<div class="signal-card__meta">
+							<span class="metric">{formatDate(record.updated)}</span>
+							<span class="metric">{record.difficulty}</span>
+						</div>
+					</a>
+				))
+			}
+		</div>
+	</section>
+</BaseLayout>

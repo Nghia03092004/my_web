@@ -1,0 +1,46 @@
+\section{Problem Summary}
+You are given a binary grid where land cells form islands through four-directional adjacency. Count how many separate islands exist.
+
+The hard part is not detecting land. It is making sure an entire connected component is counted exactly once.
+
+\section{Recognition Pattern}
+This is a \textbf{DFS/BFS + visited} problem on a grid.
+
+In interviews, recognize it when:
+\begin{itemize}
+\item the input is a 2D grid
+\item cells connect through fixed directions such as up, down, left, and right
+\item the question asks for connected components, reachability, or flood fill
+\end{itemize}
+
+\section{Key Idea}
+Scan the grid cell by cell. Whenever you find unvisited land, that land must belong to a new island, so increment the answer and flood-fill the entire component.
+
+The flood fill marks every cell in that island as visited. After that, the outer scan can safely ignore those cells, so each island contributes exactly one count.
+
+For this problem, mutating the grid from `'1'` to `'0'` is the simplest visited-marking strategy.
+
+\section{Step-by-step Reasoning}
+The naive mistake is to count every land cell, but that clearly overcounts multi-cell islands.
+
+The next observation is structural: two land cells belong to the same island precisely when they are in the same connected component under four-directional movement.
+
+That reframes the task as a standard graph problem. The grid is just an implicit graph where each land cell has up to four neighbors. Once you see that, DFS or BFS is the natural tool: start at one land cell, visit everything reachable from it, and treat that whole region as one island.
+
+\section{Complexity}
+\begin{itemize}
+\item Time: \(O(mn)\)
+\item Space: \(O(mn)\) in the worst case due to the recursion stack
+\end{itemize}
+
+\section{Common Pitfalls}
+\begin{itemize}
+\item Only four-directional neighbors count. Diagonals do not connect islands here.
+\item Mark a cell as visited before exploring neighbors, otherwise cycles cause repeated work.
+\item Mutating the grid is clean here, but in other interview settings you may need a separate `visited` matrix if the input must stay unchanged.
+\end{itemize}
+
+\section{Variants / Follow-ups}
+This pattern leads directly to \textbf{Max Area of Island}, \textbf{Surrounded Regions}, \textbf{Flood Fill}, and \textbf{Number of Provinces}.
+
+The reusable idea is to translate a grid into component traversal instead of treating each cell as an isolated local decision.

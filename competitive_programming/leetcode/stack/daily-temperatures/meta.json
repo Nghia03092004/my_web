@@ -1,0 +1,11 @@
+{
+  "title": "Daily Temperatures",
+  "category": "Stack",
+  "slug": "daily-temperatures",
+  "officialUrl": "https://leetcode.com/problems/daily-temperatures/",
+  "difficulty": "Medium",
+  "tags": ["stack", "monotonic stack", "next greater element"],
+  "status": "solved",
+  "order": 1,
+  "summary": "For each day, compute how far away the next warmer temperature appears."
+}

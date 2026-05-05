@@ -1,0 +1,52 @@
+\section{Problem Summary}
+Given coin denominations and a target amount, return the minimum number of coins needed to make that amount. If it cannot be formed, return \(-1\).
+
+Because each coin may be used repeatedly, this is not a one-time selection problem. It is a repeated-choice optimization problem over smaller amounts.
+
+\section{Recognition Pattern}
+This is a \textbf{1D dynamic programming} problem with an \textbf{unbounded knapsack-style transition}.
+
+In interviews, recognize it when:
+\begin{itemize}
+\item the answer for amount \(x\) depends on answers for smaller amounts
+\item choices can be reused multiple times
+\item the question asks for a minimum or maximum count, not just feasibility
+\end{itemize}
+
+\section{Key Idea}
+Let \(dp[x]\) be the minimum number of coins needed to form amount \(x\).
+
+For every amount \(x\), try each coin \(c\):
+\[
+dp[x] = \min(dp[x], dp[x - c] + 1)
+\]
+whenever \(x - c \ge 0\) and \(dp[x - c]\) is reachable.
+
+The recurrence is natural: if the last coin used is \(c\), then everything before that last step is exactly the subproblem for amount \(x - c\).
+
+\section{Step-by-step Reasoning}
+The brute-force recursive solution tries every coin choice at every step. That quickly becomes exponential because the same remaining amount is solved again and again.
+
+Memoization fixes the repeated work, but the bottom-up version is usually easier to explain in an interview because the state is simple and the implementation is compact.
+
+The important observation is that amounts from \(0\) up to the target form a valid build order. Once smaller amounts are solved, each larger amount can reuse those answers immediately.
+
+Using a large sentinel value lets the code distinguish between reachable and unreachable states cleanly.
+
+\section{Complexity}
+\begin{itemize}
+\item Time: \(O(amount \cdot n)\), where \(n\) is the number of coin types
+\item Space: \(O(amount)\)
+\end{itemize}
+
+\section{Common Pitfalls}
+\begin{itemize}
+\item If you use a large sentinel such as `amount + 1`, do not add one to an unreachable state without checking it first.
+\item Remember that `amount = 0` should return zero coins.
+\item Mixing this problem with the counting version (\textbf{Coin Change II}) can lead to the wrong recurrence or the wrong interpretation of the DP state.
+\end{itemize}
+
+\section{Variants / Follow-ups}
+This same template appears in \textbf{Coin Change II}, \textbf{Perfect Squares}, and several minimum-step or minimum-cost problems over integer states.
+
+The main reusable lesson is to define a DP state that represents a smaller prefix of the answer space and then ask what the final move could have been.

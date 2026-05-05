@@ -1,0 +1,258 @@
+---
+import LatexContentPanel from '../../../../features/competitive-programming/components/LatexContentPanel.astro';
+import CompetitiveProgrammingResources from '../../../../features/competitive-programming/components/CompetitiveProgrammingResources.astro';
+import CompetitiveProgrammingSourceTabs from '../../../../features/competitive-programming/components/CompetitiveProgrammingSourceTabs.astro';
+import LeetcodeProblemPagination from '../../../../features/competitive-programming-leetcode/components/LeetcodeProblemPagination.astro';
+import {
+	getLeetcodeCategoryRecord,
+	getLeetcodeProblemRecord,
+	getLeetcodeProblemRecords,
+	getLeetcodeProblemSources,
+	getLeetcodeRoutePath,
+} from '../../../../features/competitive-programming-leetcode/lib/leetcode';
+import { parseLeetcodeEditorial } from '../../../../features/competitive-programming-leetcode/lib/leetcode-editorial';
+import { renderLatexContent } from '../../../../features/competitive-programming/lib/latex-editorial';
+import PostLayout from '../../../../layouts/PostLayout.astro';
+import { withBase } from '../../../../lib/paths';
+
+export async function getStaticPaths() {
+	const records = await getLeetcodeProblemRecords();
+
+	return records.map((record) => ({
+		params: {
+			category: record.categorySlug,
+			slug: record.slug,
+		},
+	}));
+}
+
+const categorySlug = Astro.params.category;
+const slug = Astro.params.slug;
+if (!categorySlug || !slug) {
+	throw new Error('Missing LeetCode route parameters.');
+}
+
+const record = await getLeetcodeProblemRecord(categorySlug, slug);
+if (!record) {
+	throw new Error(`LeetCode entry not found for ${categorySlug}/${slug}.`);
+}
+
+const [category, sources] = await Promise.all([
+	getLeetcodeCategoryRecord(categorySlug),
+	getLeetcodeProblemSources(record),
+]);
+
+if (!category) {
+	throw new Error(`LeetCode category not found for ${categorySlug}.`);
+}
+
+const parsedEditorial = parseLeetcodeEditorial(sources.editorial);
+const renderSection = (content: string | undefined, prefix: string) =>
+	content
+		? renderLatexContent(content, {
+				headingDepthOffset: 2,
+				headingSlugPrefix: `leetcode-${prefix}-${record.id}`,
+			})
+		: undefined;
+
+const summarySection = renderSection(parsedEditorial.summary?.content ?? record.summary, 'summary');
+const recognitionSection = renderSection(parsedEditorial.recognition?.content, 'recognition');
+const keyIdeaSection = renderSection(parsedEditorial.keyIdea?.content, 'key-idea');
+const reasoningSection = renderSection(parsedEditorial.reasoning?.content, 'reasoning');
+const complexitySection = renderSection(parsedEditorial.complexity?.content, 'complexity');
+const pitfallsSection = renderSection(parsedEditorial.pitfalls?.content, 'pitfalls');
+const variantsSection = renderSection(parsedEditorial.variants?.content, 'variants');
+
+const currentIndex = category.records.findIndex((entry) => entry.id === record.id);
+const previousRecord = currentIndex > 0 ? category.records[currentIndex - 1] : undefined;
+const nextRecord =
+	currentIndex >= 0 && currentIndex < category.records.length - 1 ? category.records[currentIndex + 1] : undefined;
+const categoryPagePath = getLeetcodeRoutePath(record.categorySlug);
+
+const headings = [
+	{ depth: 2, slug: 'problem-summary', text: 'Problem Summary' },
+	...(summarySection?.headings ?? []),
+	...(recognitionSection ? [{ depth: 2, slug: 'recognition-pattern', text: 'Recognition Pattern' }] : []),
+	...(recognitionSection?.headings ?? []),
+	...(keyIdeaSection ? [{ depth: 2, slug: 'key-idea', text: 'Key Idea' }] : []),
+	...(keyIdeaSection?.headings ?? []),
+	...(reasoningSection ? [{ depth: 2, slug: 'step-by-step-reasoning', text: 'Step-by-step Reasoning' }] : []),
+	...(reasoningSection?.headings ?? []),
+	...(complexitySection ? [{ depth: 2, slug: 'complexity', text: 'Complexity' }] : []),
+	...(complexitySection?.headings ?? []),
+	{ depth: 2, slug: 'code', text: 'C++ Solution' },
+	...(pitfallsSection ? [{ depth: 2, slug: 'common-pitfalls', text: 'Common Pitfalls' }] : []),
+	...(pitfallsSection?.headings ?? []),
+	...(variantsSection ? [{ depth: 2, slug: 'variants-follow-ups', text: 'Variants / Follow-ups' }] : []),
+	...(variantsSection?.headings ?? []),
+	{ depth: 2, slug: 'source-files', text: 'Source Files and Assets' },
+];
+
+const resourceLinks = [
+	{
+		label: 'Editorial TeX',
+		href: record.assetUrls.editorial,
+		path: record.sourcePaths.editorial,
+	},
+	{
+		label: 'C++ implementation',
+		href: record.assetUrls.cpp,
+		path: record.sourcePaths.cpp,
+	},
+	{
+		label: 'Metadata',
+		href: record.assetUrls.meta,
+		path: record.sourcePaths.meta,
+	},
+];
+---
+
+<PostLayout
+	title={record.title}
+	description={record.summary}
+	published={record.updated}
+	publishedLabel="Updated"
+	eyebrow={`LeetCode / ${record.categoryTitle}`}
+	backHref={categoryPagePath}
+	backLabel={record.categoryTitle}
+	tags={record.tags}
+	metaItems={[
+		{ label: 'Archive', value: 'LeetCode Solutions' },
+		{ label: 'Category', value: record.categoryTitle },
+		{ label: 'Difficulty', value: record.difficulty },
+		{ label: 'Status', value: 'Solved' },
+	]}
+	headings={headings}
+	headerLinks={[
+		{ label: 'Official problem', href: record.officialUrl },
+	]}
+	primaryLink={{
+		label: `Browse ${record.categoryTitle}`,
+		href: withBase(categoryPagePath),
+	}}
+	secondaryLinks={[
+		{
+			label: 'All LeetCode',
+			href: withBase(getLeetcodeRoutePath()),
+		},
+		{
+			label: 'Official LeetCode',
+			href: 'https://leetcode.com/problemset/',
+		},
+	]}
+>
+	{
+		summarySection ? (
+			<LatexContentPanel
+				sectionId="problem-summary"
+				label="Problem summary"
+				title="Problem Summary"
+				description="Original task summary for this archive page. The official LeetCode prompt is linked in the header instead of being mirrored here."
+				html={summarySection.html}
+				usedFallback={summarySection.usedFallback}
+			/>
+		) : null
+	}
+
+	{
+		recognitionSection ? (
+			<LatexContentPanel
+				sectionId="recognition-pattern"
+				label="Recognition"
+				title="Recognition Pattern"
+				description="How to notice the underlying interview pattern before writing code."
+				html={recognitionSection.html}
+				usedFallback={recognitionSection.usedFallback}
+			/>
+		) : null
+	}
+
+	{
+		keyIdeaSection ? (
+			<LatexContentPanel
+				sectionId="key-idea"
+				label="Key idea"
+				title="Key Idea"
+				description="The main invariant or observation that makes the clean solution work."
+				html={keyIdeaSection.html}
+				usedFallback={keyIdeaSection.usedFallback}
+			/>
+		) : null
+	}
+
+	{
+		reasoningSection ? (
+			<LatexContentPanel
+				sectionId="step-by-step-reasoning"
+				label="Reasoning"
+				title="Step-by-step Reasoning"
+				description="How to move from the obvious brute-force idea to the interview-ready solution."
+				html={reasoningSection.html}
+				usedFallback={reasoningSection.usedFallback}
+			/>
+		) : null
+	}
+
+	{
+		complexitySection ? (
+			<LatexContentPanel
+				sectionId="complexity"
+				label="Complexity"
+				title="Complexity"
+				description="Time and memory costs for the implementation shown below."
+				html={complexitySection.html}
+				usedFallback={complexitySection.usedFallback}
+			/>
+		) : null
+	}
+
+	<CompetitiveProgrammingSourceTabs
+		rootId={`leetcode-code-${record.id}`}
+		sectionId="code"
+		sectionLabel="Implementation"
+		title="C++ Solution"
+		description="The exact repository source used for this LeetCode solution page."
+		showPaths={false}
+		tabs={[
+			{
+				id: 'cpp',
+				label: 'C++',
+				description: 'Interview-ready C++ solution with the exact source that backs this page.',
+				path: record.sourcePaths.cpp,
+				rawUrl: record.assetUrls.cpp,
+				languageClass: 'language-cpp',
+				source: sources.cpp,
+			},
+		]}
+	/>
+
+	{
+		pitfallsSection ? (
+			<LatexContentPanel
+				sectionId="common-pitfalls"
+				label="Pitfalls"
+				title="Common Pitfalls"
+				description="Real implementation mistakes that show up often in interviews and submissions."
+				html={pitfallsSection.html}
+				usedFallback={pitfallsSection.usedFallback}
+			/>
+		) : null
+	}
+
+	{
+		variantsSection ? (
+			<LatexContentPanel
+				sectionId="variants-follow-ups"
+				label="Follow-ups"
+				title="Variants / Follow-ups"
+				description="Nearby problems and the next generalization to learn once this pattern is stable."
+				html={variantsSection.html}
+				usedFallback={variantsSection.usedFallback}
+			/>
+		) : null
+	}
+
+	<CompetitiveProgrammingResources links={resourceLinks} />
+
+	<LeetcodeProblemPagination previous={previousRecord} next={nextRecord} />
+</PostLayout>

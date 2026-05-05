@@ -1,0 +1,48 @@
+\section{Problem Summary}
+Given a string, find the length of the longest contiguous substring that contains no repeated character.
+
+The important word is \emph{substring}: the characters must stay contiguous, so this is about maintaining a valid window, not choosing arbitrary characters.
+
+\section{Recognition Pattern}
+This is a \textbf{sliding window with last-seen positions} problem.
+
+In interviews, recognize it when:
+\begin{itemize}
+\item the question asks for the longest or shortest valid substring
+\item validity depends on character frequencies or duplicates inside a contiguous range
+\item extending the right boundary can break the window, and moving the left boundary can restore it
+\end{itemize}
+
+\section{Key Idea}
+Keep a window \([left, right]\) that always contains unique characters.
+
+When you read a new character at position \(right\), check where it last appeared. If that last appearance is still inside the current window, jump \(left\) just past it. Then update the best window length.
+
+This version is cleaner than repeatedly shrinking one step at a time, because it uses the exact information you need: the most recent conflicting index.
+
+\section{Step-by-step Reasoning}
+The brute-force solution tries every starting point and grows until a duplicate appears, which leads to \(O(n^2)\) work.
+
+A standard sliding window improves this by expanding right and shrinking left while duplicates exist. That already reaches linear time.
+
+The last-seen optimization makes the window update even cleaner. Instead of removing characters one by one, you jump the left boundary directly to the only place that matters: one position after the previous copy of the repeated character.
+
+The window still moves only forward, which is why the total work stays linear.
+
+\section{Complexity}
+\begin{itemize}
+\item Time: \(O(n)\)
+\item Space: \(O(\min(n, \Sigma))\), where \(\Sigma\) is the character set size
+\end{itemize}
+
+\section{Common Pitfalls}
+\begin{itemize}
+\item Moving the left boundary backward is incorrect. Always use \(left = \max(left, lastSeen[c] + 1)\).
+\item Off-by-one mistakes are common when converting an index range into a length. The current window length is \(right - left + 1\).
+\item If you use an array for character positions in C++, cast to `unsigned char` before indexing to avoid signed-char surprises.
+\end{itemize}
+
+\section{Variants / Follow-ups}
+This pattern generalizes to \textbf{Longest Repeating Character Replacement}, \textbf{Minimum Window Substring}, and \textbf{Longest Substring with At Most K Distinct Characters}.
+
+What changes from problem to problem is the window invariant, not the overall left-right scan.

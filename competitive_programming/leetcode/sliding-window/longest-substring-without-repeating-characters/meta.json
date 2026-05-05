@@ -1,0 +1,11 @@
+{
+  "title": "Longest Substring Without Repeating Characters",
+  "category": "Sliding Window",
+  "slug": "longest-substring-without-repeating-characters",
+  "officialUrl": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
+  "difficulty": "Medium",
+  "tags": ["sliding window", "string", "last seen index"],
+  "status": "solved",
+  "order": 1,
+  "summary": "Track the longest contiguous substring whose characters stay unique."
+}

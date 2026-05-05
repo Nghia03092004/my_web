@@ -1,0 +1,53 @@
+\section{Problem Summary}
+Koko has several piles of bananas and a deadline in hours. She chooses one pile per hour and eats up to \(k\) bananas from it. The task is to find the smallest integer speed \(k\) that lets her finish on time.
+
+The input is not sorted, but the answer is still a single integer that can be tested for feasibility.
+
+\section{Recognition Pattern}
+This is \textbf{binary search on the answer}.
+
+In interviews, recognize it when:
+\begin{itemize}
+\item the question asks for the minimum or maximum integer answer
+\item you can write a helper function that says whether a candidate answer works
+\item once an answer works, every larger answer also works, or vice versa
+\end{itemize}
+
+\section{Key Idea}
+If Koko can finish with speed \(k\), then she can also finish with any speed larger than \(k\). That monotonic behavior is exactly what binary search needs.
+
+So instead of testing every possible speed from \(1\) to the largest pile, binary-search that range and use a feasibility check:
+\[
+\text{hours needed} = \sum \left\lceil \frac{pile}{k} \right\rceil
+\]
+
+If the total hours fit within the deadline, try a smaller speed. Otherwise, increase the speed.
+
+\section{Step-by-step Reasoning}
+The brute-force idea is straightforward: try every speed and stop at the first one that works. The problem is that the answer range can be large, so this wastes too many checks.
+
+The key observation is not about the piles themselves. It is about the \emph{answer space}. Speeds form a yes/no boundary:
+\begin{itemize}
+\item too slow: impossible
+\item fast enough: possible
+\end{itemize}
+
+Once you see that boundary, the input no longer needs to be sorted. You only need a reliable predicate and a finite search range, which here is \([1, \max(pile)]\).
+
+\section{Complexity}
+\begin{itemize}
+\item Time: \(O(n \log M)\), where \(M\) is the largest pile
+\item Space: \(O(1)\)
+\end{itemize}
+
+\section{Common Pitfalls}
+\begin{itemize}
+\item Using plain integer division for the hour count is wrong. You need ceiling division, which can be written as \((pile + k - 1) / k\).
+\item The accumulated hour count can exceed 32-bit range, so use a 64-bit integer for the total.
+\item When a speed works, do not stop immediately. Keep searching the left half for a smaller feasible answer.
+\end{itemize}
+
+\section{Variants / Follow-ups}
+This pattern appears again in \textbf{Capacity To Ship Packages Within D Days}, \textbf{Split Array Largest Sum}, and many scheduling or rate-limit problems.
+
+The reusable skill is spotting a monotone feasibility predicate even when the original input is unsorted.

@@ -1,0 +1,11 @@
+{
+  "title": "3Sum",
+  "category": "Two Pointers",
+  "slug": "3sum",
+  "officialUrl": "https://leetcode.com/problems/3sum/",
+  "difficulty": "Medium",
+  "tags": ["two pointers", "sorting", "duplicate handling"],
+  "status": "solved",
+  "order": 1,
+  "summary": "Return every distinct triplet whose values sum to zero without duplicating answers."
+}

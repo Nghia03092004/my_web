@@ -1,0 +1,11 @@
+{
+  "title": "Two Sum",
+  "category": "Arrays",
+  "slug": "two-sum",
+  "officialUrl": "https://leetcode.com/problems/two-sum/",
+  "difficulty": "Easy",
+  "tags": ["array", "hash map", "complement lookup"],
+  "status": "solved",
+  "order": 1,
+  "summary": "Find the two indices in an unsorted array whose values add up to the target."
+}

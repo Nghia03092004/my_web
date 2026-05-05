@@ -1,0 +1,46 @@
+\section{Problem Summary}
+You are given an unsorted array and a target value. Find the two positions whose values add up exactly to the target.
+
+The main constraints are what make this interesting: you need indices, the input is not sorted, and there is exactly one valid pair.
+
+\section{Recognition Pattern}
+This is the classic \textbf{complement lookup with a hash map} pattern.
+
+In interviews, recognize it when:
+\begin{itemize}
+\item you need a pair whose values satisfy a direct equation such as \(a + b = target\)
+\item the array is unsorted, so two pointers are not immediately available
+\item the problem asks for indices or original positions
+\end{itemize}
+
+\section{Key Idea}
+As you scan from left to right, each number asks a simple question: \emph{have I already seen the value that completes the target?}
+
+If the current value is \(x\), the needed complement is \(target - x\). A hash map lets us answer that question in \(O(1)\) average time. If the complement was seen earlier, we already have the answer. Otherwise, store the current value and its index for later numbers.
+
+\section{Step-by-step Reasoning}
+The brute-force approach checks every pair of indices. That works, but it costs \(O(n^2)\), which is unnecessary for such a direct equality test.
+
+Sorting is tempting because it enables two pointers, but it complicates index recovery and adds work that the problem does not need.
+
+The better observation is that each number only cares about one missing value. That turns the problem from \emph{search all pairs} into \emph{answer one lookup per element}. A hash map is exactly the right tool for that shift.
+
+One subtle detail matters: check for the complement \emph{before} inserting the current number. That guarantees the answer uses two distinct indices.
+
+\section{Complexity}
+\begin{itemize}
+\item Time: \(O(n)\) average
+\item Space: \(O(n)\)
+\end{itemize}
+
+\section{Common Pitfalls}
+\begin{itemize}
+\item Inserting the current number before checking its complement can accidentally reuse the same element when \(target = 2 \cdot nums[i]\).
+\item Returning the values instead of the indices misses what the problem actually asks for.
+\item Overwriting indices carelessly can make duplicate-heavy cases harder to reason about.
+\end{itemize}
+
+\section{Variants / Follow-ups}
+The next step is \textbf{Two Sum II}, where the array is already sorted and two pointers become the cleanest tool.
+
+This same complement idea also reappears inside larger problems such as \textbf{3Sum}, where you fix one value and solve a two-number subproblem on the remaining suffix.

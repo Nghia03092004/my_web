@@ -1,0 +1,11 @@
+{
+  "title": "Number of Islands",
+  "category": "Graph",
+  "slug": "number-of-islands",
+  "officialUrl": "https://leetcode.com/problems/number-of-islands/",
+  "difficulty": "Medium",
+  "tags": ["graph", "dfs", "connected components"],
+  "status": "solved",
+  "order": 1,
+  "summary": "Count how many connected land components appear in a binary grid."
+}

@@ -1,0 +1,53 @@
+\section{Problem Summary}
+Given the root of a binary tree and two node pointers \(p\) and \(q\), return their lowest common ancestor.
+
+The tree is not a binary search tree, so you cannot rely on value ordering. The solution has to work from structure alone.
+
+\section{Recognition Pattern}
+This is a \textbf{postorder DFS on a tree} problem.
+
+In interviews, recognize it when:
+\begin{itemize}
+\item the answer depends on information coming from both left and right subtrees
+\item you are asked where two search paths first meet
+\item the tree has no parent pointers and no BST ordering guarantee
+\end{itemize}
+
+\section{Key Idea}
+Let the recursive call answer a simple question: \emph{does this subtree contain \(p\), \(q\), or neither?}
+
+The return rule is:
+\begin{itemize}
+\item if the current node is null, return null
+\item if the current node is \(p\) or \(q\), return the current node
+\item recursively search left and right
+\item if both sides return non-null, the current node is the lowest common ancestor
+\item otherwise return the non-null side
+\end{itemize}
+
+This works because the first node that receives one target from each side is exactly where the two paths merge.
+
+\section{Step-by-step Reasoning}
+One workable approach is to build the full root-to-node path for both targets, then compare the two paths until they diverge. That is correct, but it spends extra memory storing information you do not actually need to keep.
+
+The cleaner observation is that each subtree only needs to report whether it found one of the targets. That makes the problem naturally recursive.
+
+Postorder traversal is the right direction because the current node can only decide its role after both children have already reported what they found. If both children report success, the current node is the split point. If only one side reports success, the answer is still deeper on that side.
+
+\section{Complexity}
+\begin{itemize}
+\item Time: \(O(n)\)
+\item Space: \(O(h)\), where \(h\) is the tree height
+\end{itemize}
+
+\section{Common Pitfalls}
+\begin{itemize}
+\item Compare node pointers, not just node values. The problem is about the actual target nodes.
+\item Do not assume BST ordering rules. This problem is for a general binary tree.
+\item Remember that one target can be the ancestor of the other. Returning the current node immediately when it matches \(p\) or \(q\) handles that case correctly.
+\end{itemize}
+
+\section{Variants / Follow-ups}
+Nearby variants include \textbf{Lowest Common Ancestor of a Binary Search Tree}, \textbf{Lowest Common Ancestor III} with parent pointers, and multi-node ancestor questions.
+
+The reusable pattern is a postorder DFS where each subtree returns just enough information for its parent to decide.
