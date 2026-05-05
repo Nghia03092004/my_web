@@ -1,0 +1,12 @@
+{
+  "title": "Replace",
+  "slug": "replace",
+  "contestId": 1707,
+  "index": "E",
+  "rating": 3500,
+  "officialUrl": "https://codeforces.com/problemset/problem/1707/E",
+  "tags": ["interval dynamics", "binary lifting", "range queries", "sparse table"],
+  "status": "solved",
+  "order": 2,
+  "summary": "Repeatedly replace an interval by the minimum and maximum values inside it, and find the first time it becomes [1, n]."
+}

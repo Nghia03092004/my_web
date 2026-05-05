@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { withBase } from '../../../../lib/paths';
+
+const target = withBase('/competitive-programming/codeforces/3500');
+---
+
+<BaseLayout title="Codeforces 3500+" description="Redirecting to the Codeforces 3500+ archive landing page.">
+	<meta http-equiv="refresh" content={`0; url=${target}`} />
+	<section class="page-intro cp-intro">
+		<span class="eyebrow">Competitive Programming</span>
+		<h1>Codeforces 3500+</h1>
+		<p>This alias redirects to the main Codeforces 3500+ archive landing page.</p>
+		<div class="chip-row">
+			<a class="button" href={target}>Open the archive</a>
+		</div>
+	</section>
+</BaseLayout>
+
+<script is:inline>
+	window.location.replace({JSON.stringify(target)});
+</script>

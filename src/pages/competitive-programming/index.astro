@@ -1,4 +1,8 @@
 ---
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import {
 	getDsaCategoryRecords,
@@ -17,9 +21,118 @@ import {
 	getCsesProblemRecords,
 } from '../../features/competitive-programming-cses/lib/cses';
 
-const [summaries, allRecords, csesSummary, csesRecords, icpcYears, ioiYears, dsaCategories, dsaNotes] = await Promise.all([
+function toDate(value: Date | string | undefined) {
+	if (!value) {
+		return undefined;
+	}
+
+	const normalized = value instanceof Date ? value : new Date(value);
+	return Number.isNaN(normalized.getTime()) ? undefined : normalized;
+}
+
+function compareDates(left: Date | string | undefined, right: Date | string | undefined) {
+	return (toDate(right)?.getTime() ?? 0) - (toDate(left)?.getTime() ?? 0);
+}
+
+async function loadOptionalLeetcodeArchive() {
+	const leetcodeLibPath = path.resolve(
+		process.cwd(),
+		'src',
+		'features',
+		'competitive-programming-leetcode',
+		'lib',
+		'leetcode.ts',
+	);
+
+	try {
+		await fs.access(leetcodeLibPath);
+		const module = await import(pathToFileURL(leetcodeLibPath).href);
+		const [summary, records] = await Promise.all([
+			module.getLeetcodeArchiveSummary(),
+			module.getLeetcodeProblemRecords(),
+		]);
+
+		return {
+			enabled: true,
+			summary,
+			records,
+		};
+	} catch {
+		return {
+			enabled: false,
+			summary: {
+				entryCount: 0,
+				activeCategoryCount: 0,
+			},
+			records: [] as Array<{
+				categorySlug: string;
+				categoryTitle: string;
+				slug: string;
+				title: string;
+				summary: string;
+				difficulty: string;
+				updated: Date | string;
+			}>,
+		};
+	}
+}
+
+async function loadOptionalCodeforces3500Archive() {
+	const codeforcesLibPath = path.resolve(
+		process.cwd(),
+		'src',
+		'features',
+		'competitive-programming-codeforces',
+		'lib',
+		'codeforces3500.ts',
+	);
+
+	try {
+		await fs.access(codeforcesLibPath);
+		const module = await import(pathToFileURL(codeforcesLibPath).href);
+		const [summary, records] = await Promise.all([
+			module.getCodeforces3500ArchiveSummary(),
+			module.getCodeforces3500ProblemRecords(),
+		]);
+
+		return {
+			enabled: true,
+			summary,
+			records,
+		};
+	} catch {
+		return {
+			enabled: false,
+			summary: {
+				entryCount: 0,
+			},
+			records: [] as Array<{
+				slug: string;
+				contestLabel: string;
+				title: string;
+				summary: string;
+				updated: Date | string;
+			}>,
+		};
+	}
+}
+
+const [
+	summaries,
+	allRecords,
+	optionalLeetcode,
+	optionalCodeforces3500,
+	csesSummary,
+	csesRecords,
+	icpcYears,
+	ioiYears,
+	dsaCategories,
+	dsaNotes,
+] = await Promise.all([
 	getCompetitiveProgrammingTrackSummaries(),
 	getCompetitiveProgrammingRecords(),
+	loadOptionalLeetcodeArchive(),
+	loadOptionalCodeforces3500Archive(),
 	getCsesArchiveSummary(),
 	getCsesProblemRecords(),
 	getCompetitiveProgrammingYearGroups('icpc'),
@@ -28,13 +141,25 @@ const [summaries, allRecords, csesSummary, csesRecords, icpcYears, ioiYears, dsa
 	getDsaNoteRecords(),
 ]);
 const [icpcSummary, ioiSummary] = summaries;
-const totalEntries = summaries.reduce((sum, summary) => sum + summary.entryCount, 0) + csesSummary.entryCount;
+const leetcodeSummary = optionalLeetcode.summary;
+const leetcodeRecords = optionalLeetcode.records;
+const codeforces3500Summary = optionalCodeforces3500.summary;
+const codeforces3500Records = optionalCodeforces3500.records;
+const totalEntries =
+	summaries.reduce((sum, summary) => sum + summary.entryCount, 0) +
+	leetcodeSummary.entryCount +
+	csesSummary.entryCount +
+	codeforces3500Summary.entryCount;
 const latestUpdated = [
 	...allRecords.map((record) => record.updated),
+	...leetcodeRecords.map((record) => record.updated),
 	...csesRecords.map((record) => record.updated),
+	...codeforces3500Records.map((record) => record.updated),
 	...dsaNotes.map((note) => note.updated),
 ]
-	.sort((left, right) => right.getTime() - left.getTime())[0];
+	.map((value) => toDate(value))
+	.filter((value): value is Date => Boolean(value))
+	.sort((left, right) => compareDates(left, right))[0];
 const featuredYears = [...icpcYears, ...ioiYears]
 	.sort((left, right) => {
 		if (left.year !== right.year) {
@@ -51,7 +176,7 @@ const latestEntries = [
 		eyebrow: `${record.track.toUpperCase()} ${record.year}`,
 		title: record.displayTitle,
 		description: record.statementPreview ?? record.description,
-		updated: record.updated,
+		updated: toDate(record.updated) ?? new Date(0),
 		detail: record.hasStatementText ? 'statement + editorial + code' : 'editorial + code',
 	})),
 	...csesRecords.map((record) => ({
@@ -60,11 +185,31 @@ const latestEntries = [
 		eyebrow: `CSES ${record.categoryTitle}`,
 		title: record.title,
 		description: record.summary,
-		updated: record.updated,
+		updated: toDate(record.updated) ?? new Date(0),
 		detail: 'official link + editorial + code',
 	})),
+	...leetcodeRecords.map((record) => ({
+		href: withBase(`/competitive-programming/leetcode/${record.categorySlug}/${record.slug}`),
+		tone: record.difficulty === 'Easy' ? 'olive' : record.difficulty === 'Medium' ? 'cool' : 'expert',
+		eyebrow: `LeetCode ${record.categoryTitle}`,
+		title: record.title,
+		description: record.summary,
+		updated: toDate(record.updated) ?? new Date(0),
+		detail: `${record.difficulty} + pattern write-up + code`,
+	})),
+	...(optionalCodeforces3500.enabled
+		? codeforces3500Records.map((record) => ({
+				href: withBase(`/competitive-programming/codeforces/3500/${record.slug}`),
+				tone: 'warm',
+				eyebrow: `CF ${record.contestLabel}`,
+				title: record.title,
+				description: record.summary,
+				updated: toDate(record.updated) ?? new Date(0),
+				detail: 'official link + deep editorial + code',
+			}))
+		: []),
 ]
-	.sort((left, right) => right.updated.getTime() - left.updated.getTime())
+	.sort((left, right) => compareDates(left.updated, right.updated))
 	.slice(0, 6);
 const publicBranches = [
 	{
@@ -87,11 +232,25 @@ const publicBranches = [
 		description: `${ioiSummary.entryCount} problems across ${ioiSummary.yearCount} years. Each task page centers the write-up and code.`,
 		linkLabel: `Browse ${ioiSummary.label}`,
 	},
+	...(optionalLeetcode.enabled
+		? [
+				{
+					key: 'leetcode',
+					href: withBase('/competitive-programming/leetcode'),
+					tone: 'olive',
+					indexLabel: '03',
+					eyebrow: 'LeetCode',
+					title: 'LeetCode Solutions',
+					description: `${leetcodeSummary.entryCount} curated interview-focused solutions across ${leetcodeSummary.activeCategoryCount} active categories, with pattern recognition, original summaries, and clean C++ implementations.`,
+					linkLabel: 'Browse LeetCode',
+				},
+			]
+		: []),
 	{
 		key: 'dsa',
 		href: withBase(getDsaRoutePath()),
 		tone: 'olive',
-		indexLabel: '03',
+		indexLabel: optionalLeetcode.enabled ? '04' : '03',
 		eyebrow: 'DSA',
 		title: 'Data Structures & Algorithms',
 		description: `${dsaNotes.length} published notes across ${dsaCategories.length} categories, all kept in TeX plus standalone C++ so the write-up and implementation stay editable.`,
@@ -101,27 +260,51 @@ const publicBranches = [
 		key: 'cses',
 		href: withBase('/competitive-programming/cses'),
 		tone: 'cool',
-		indexLabel: '04',
+		indexLabel: optionalLeetcode.enabled ? '05' : '04',
 		eyebrow: 'CSES',
 		title: 'CSES Problem Set',
 		description: `${csesSummary.entryCount} published solutions across ${csesSummary.categoryCount} official categories, with original summaries, rendered editorials, and exact C++ source files.`,
 		linkLabel: 'Browse CSES',
 	},
+	...(optionalCodeforces3500.enabled
+		? [
+				{
+					key: 'codeforces-3500',
+					href: withBase('/competitive-programming/codeforces/3500'),
+					tone: 'warm',
+					indexLabel: optionalLeetcode.enabled ? '06' : '05',
+					eyebrow: 'CODEFORCES',
+					title: 'Codeforces 3500+ Problems',
+					description: `${codeforces3500Summary.entryCount} published deep dives for very hard Codeforces problems, each kept intentionally small-batch and source-first.`,
+					linkLabel: 'Browse Codeforces 3500+',
+				},
+			]
+		: []),
 ];
+const archiveDescription =
+	optionalLeetcode.enabled && optionalCodeforces3500.enabled
+		? 'This section has six public branches: the ICPC archive, the IOI archive, the LeetCode archive, the CSES archive, the Codeforces 3500+ archive, and a growing Data Structures & Algorithms notebook. The contest pages keep explanations and code tied to source files; the LeetCode branch emphasizes interview-facing pattern recognition; the DSA branch keeps reusable ideas in longer note form.'
+		: optionalLeetcode.enabled
+			? 'This section has five public branches: the ICPC archive, the IOI archive, the LeetCode archive, the CSES archive, and a growing Data Structures & Algorithms notebook. The contest pages keep explanations and code tied to source files; the LeetCode branch emphasizes interview-facing pattern recognition; the DSA branch keeps reusable ideas in longer note form.'
+			: optionalCodeforces3500.enabled
+				? 'This section has five public branches: the ICPC archive, the IOI archive, the CSES archive, the Codeforces 3500+ archive, and a growing Data Structures & Algorithms notebook. The contest pages keep explanations and code tied to source files; the DSA branch keeps reusable ideas in longer note form.'
+				: 'This section has four public branches: the ICPC archive, the IOI archive, the CSES archive, and a growing Data Structures & Algorithms notebook. The contest pages keep explanations and code tied to source files; the DSA branch keeps reusable ideas in longer note form.';
 ---
 
 <BaseLayout
 	title="Competitive Programming"
-	description="ICPC, IOI, CSES, and data-structures-and-algorithms notes organized for browsing, revision, and reuse."
+	description={optionalLeetcode.enabled && optionalCodeforces3500.enabled
+		? 'ICPC, IOI, LeetCode, CSES, Codeforces 3500+, and data-structures-and-algorithms notes organized for browsing, revision, and reuse.'
+		: optionalLeetcode.enabled
+			? 'ICPC, IOI, LeetCode, CSES, and data-structures-and-algorithms notes organized for browsing, revision, and reuse.'
+			: optionalCodeforces3500.enabled
+				? 'ICPC, IOI, CSES, Codeforces 3500+, and data-structures-and-algorithms notes organized for browsing, revision, and reuse.'
+				: 'ICPC, IOI, CSES, and data-structures-and-algorithms notes organized for browsing, revision, and reuse.'}
 >
 	<section class="page-intro cp-intro">
 		<span class="eyebrow">Competitive Programming</span>
 		<h1>Contest archive plus long-form study notes.</h1>
-		<p>
-			This section has four public branches: the ICPC archive, the IOI archive, the CSES archive, and a
-			growing Data Structures &amp; Algorithms notebook. The contest pages keep explanations and code tied
-			to source files; the DSA branch keeps reusable ideas in longer note form.
-		</p>
+		<p>{archiveDescription}</p>
 		<div class="archive-summary">
 			<div class="archive-summary__item">
 				<strong>{totalEntries}</strong>

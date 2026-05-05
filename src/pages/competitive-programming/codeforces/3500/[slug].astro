@@ -1,0 +1,209 @@
+---
+import CompetitiveProgrammingEditorial from '../../../../features/competitive-programming/components/CompetitiveProgrammingEditorial.astro';
+import LatexContentPanel from '../../../../features/competitive-programming/components/LatexContentPanel.astro';
+import CompetitiveProgrammingResources from '../../../../features/competitive-programming/components/CompetitiveProgrammingResources.astro';
+import CompetitiveProgrammingSourceTabs from '../../../../features/competitive-programming/components/CompetitiveProgrammingSourceTabs.astro';
+import Codeforces3500ProblemPagination from '../../../../features/competitive-programming-codeforces/components/Codeforces3500ProblemPagination.astro';
+import {
+	getCodeforces3500ProblemRecord,
+	getCodeforces3500ProblemRecords,
+	getCodeforces3500ProblemSources,
+} from '../../../../features/competitive-programming-codeforces/lib/codeforces3500';
+import { parseCodeforcesEditorial } from '../../../../features/competitive-programming-codeforces/lib/codeforces-editorial';
+import { renderLatexContent } from '../../../../features/competitive-programming/lib/latex-editorial';
+import PostLayout from '../../../../layouts/PostLayout.astro';
+import { withBase } from '../../../../lib/paths';
+
+export async function getStaticPaths() {
+	const records = await getCodeforces3500ProblemRecords();
+
+	return records.map((record) => ({
+		params: {
+			slug: record.slug,
+		},
+	}));
+}
+
+const slug = Astro.params.slug;
+if (!slug) {
+	throw new Error('Missing Codeforces 3500+ route parameter.');
+}
+
+const [records, record] = await Promise.all([
+	getCodeforces3500ProblemRecords(),
+	getCodeforces3500ProblemRecord(slug),
+]);
+
+if (!record) {
+	throw new Error(`Codeforces 3500+ entry not found for ${slug}.`);
+}
+
+const sources = await getCodeforces3500ProblemSources(record);
+const parsedEditorial = parseCodeforcesEditorial(sources.editorial);
+const summarySection = renderLatexContent(parsedEditorial.summary?.content ?? record.summary, {
+	headingDepthOffset: 2,
+	headingSlugPrefix: `cf3500-summary-${record.id}`,
+});
+const editorialSection = renderLatexContent(parsedEditorial.editorial?.content ?? sources.editorial, {
+	headingDepthOffset: 2,
+	headingSlugPrefix: `cf3500-editorial-${record.id}`,
+});
+const pseudocodeSection = parsedEditorial.pseudocode
+	? renderLatexContent(parsedEditorial.pseudocode.content, {
+			headingDepthOffset: 2,
+			headingSlugPrefix: `cf3500-pseudocode-${record.id}`,
+		})
+	: undefined;
+const complexitySection = parsedEditorial.complexity
+	? renderLatexContent(parsedEditorial.complexity.content, {
+			headingDepthOffset: 2,
+			headingSlugPrefix: `cf3500-complexity-${record.id}`,
+		})
+	: undefined;
+const notesSection = parsedEditorial.notes
+	? renderLatexContent(parsedEditorial.notes.content, {
+			headingDepthOffset: 2,
+			headingSlugPrefix: `cf3500-notes-${record.id}`,
+		})
+	: undefined;
+const currentIndex = records.findIndex((entry) => entry.id === record.id);
+const previousRecord = currentIndex > 0 ? records[currentIndex - 1] : undefined;
+const nextRecord = currentIndex >= 0 && currentIndex < records.length - 1 ? records[currentIndex + 1] : undefined;
+
+const headings = [
+	{ depth: 2, slug: 'problem-summary', text: 'Problem Summary' },
+	{ depth: 2, slug: 'editorial', text: 'Editorial' },
+	...editorialSection.headings,
+	...(pseudocodeSection ? [{ depth: 2, slug: 'pseudocode', text: 'Pseudocode' }] : []),
+	...(complexitySection ? [{ depth: 2, slug: 'complexity-analysis', text: 'Complexity Analysis' }] : []),
+	{ depth: 2, slug: 'code', text: 'C++ Solution' },
+	...(notesSection ? [{ depth: 2, slug: 'notes', text: 'Pitfalls' }] : []),
+	{ depth: 2, slug: 'source-files', text: 'Source Files and Assets' },
+];
+
+const resourceLinks = [
+	{
+		label: 'Editorial TeX',
+		href: record.assetUrls.editorial,
+		path: record.sourcePaths.editorial,
+	},
+	{
+		label: 'C++ implementation',
+		href: record.assetUrls.cpp,
+		path: record.sourcePaths.cpp,
+	},
+	{
+		label: 'Metadata',
+		href: record.assetUrls.meta,
+		path: record.sourcePaths.meta,
+	},
+];
+---
+
+<PostLayout
+	title={record.title}
+	description={record.summary}
+	published={record.updated}
+	publishedLabel="Updated"
+	eyebrow="Codeforces | 3500+ archive"
+	backHref="/competitive-programming/codeforces/3500"
+	backLabel="Codeforces 3500+"
+	tags={record.tags}
+	metaItems={[
+		{ label: 'Contest', value: record.contestLabel },
+		{ label: 'Rating', value: String(record.rating) },
+		{ label: 'Status', value: 'Solved' },
+	]}
+	headings={headings}
+	headerLinks={[
+		{ label: 'Official statement', href: record.officialUrl },
+	]}
+	primaryLink={{
+		label: 'All Codeforces 3500+',
+		href: withBase('/competitive-programming/codeforces/3500'),
+	}}
+	secondaryLinks={[
+		{
+			label: 'Official Codeforces',
+			href: 'https://codeforces.com/problemset',
+		},
+	]}
+>
+	<LatexContentPanel
+		sectionId="problem-summary"
+		label="Problem summary"
+		title="Problem Summary"
+		description="Original task summary for this archive page. The official Codeforces statement is linked in the header instead of being mirrored here."
+		html={summarySection.html}
+		usedFallback={summarySection.usedFallback}
+	/>
+
+	<CompetitiveProgrammingEditorial
+		html={editorialSection.html}
+		rawUrl={record.assetUrls.editorial}
+		usedFallback={editorialSection.usedFallback}
+	/>
+
+	{
+		pseudocodeSection ? (
+			<LatexContentPanel
+				sectionId="pseudocode"
+				label="Pseudocode"
+				title="Pseudocode"
+				description="Natural algorithm flow before the concrete implementation."
+				html={pseudocodeSection.html}
+				usedFallback={pseudocodeSection.usedFallback}
+			/>
+		) : null
+	}
+
+	{
+		complexitySection ? (
+			<LatexContentPanel
+				sectionId="complexity-analysis"
+				label="Complexity"
+				title="Complexity Analysis"
+				description="Time and memory costs for the exact implementation shown below."
+				html={complexitySection.html}
+				usedFallback={complexitySection.usedFallback}
+			/>
+		) : null
+	}
+
+	<CompetitiveProgrammingSourceTabs
+		rootId={`cf3500-code-${record.id}`}
+		sectionId="code"
+		sectionLabel="Implementation"
+		title="C++ Solution"
+		description="The exact repository source used for this solution page."
+		showPaths={false}
+		tabs={[
+			{
+				id: 'cpp',
+				label: 'C++',
+				description: 'C++17 solution used on this page, with a copy button that targets the real source file contents.',
+				path: record.sourcePaths.cpp,
+				rawUrl: record.assetUrls.cpp,
+				languageClass: 'language-cpp',
+				source: sources.cpp,
+			},
+		]}
+	/>
+
+	{
+		notesSection ? (
+			<LatexContentPanel
+				sectionId="notes"
+				label="Pitfalls"
+				title="Pitfalls"
+				description="Edge cases and implementation traps worth checking before reusing the idea in contest code."
+				html={notesSection.html}
+				usedFallback={notesSection.usedFallback}
+			/>
+		) : null
+	}
+
+	<CompetitiveProgrammingResources links={resourceLinks} />
+
+	<Codeforces3500ProblemPagination previous={previousRecord} next={nextRecord} />
+</PostLayout>

@@ -1,0 +1,106 @@
+\section{Problem Summary}
+You are given \(n\) integers, each using at most \(m\) bits. For every \(k \in [0,m]\), count how many subsets have xor value with exactly \(k\) ones in binary. The answer is required modulo \(998244353\).
+
+\section{Editorial}
+\subsection{Motivation}
+The direct search space is \(2^n\), so counting subsets one by one is not an option.
+
+The real object to count is not the subsets themselves, but the xor values they can produce. Once the set of reachable xor values is understood, the subset counts follow from linear algebra.
+
+\subsection{Key Observations}
+\begin{itemize}
+\item If the xor-basis rank is \(r\), then the reachable xor values form an \(r\)-dimensional vector space \(V \subseteq \mathbb{F}_2^m\).
+\item Every reachable xor value appears the same number of times: exactly \(2^{n-r}\) subsets produce it.
+\item So the task becomes: for each Hamming weight \(k\), how many vectors in \(V\) have weight \(k\)?
+\item Because \(m \le 53\), either the rank \(r\) or the corank \(m-r\) is at most \(26\). That is the threshold that makes enumeration practical.
+\end{itemize}
+
+\subsection{Derivation}
+Reduce the input numbers to a xor basis and then push it into reduced row-echelon form over \(\mathbb{F}_2\). Let the pivot columns be \(P\) and the free columns be \(F\).
+
+If we reorder coordinates so the pivot columns come first, the basis becomes a generator matrix of the form
+\[
+G = [I_r \mid M].
+\]
+This gives two cases.
+
+\paragraph{Case 1: \(r \le 26\).}
+Enumerate all \(2^r\) linear combinations of the basis rows. Each combination is one reachable xor value, so we can count its popcount directly.
+
+\paragraph{Case 2: \(m-r \le 26\).}
+Enumerating the whole code is too expensive, but the dual code is small. For
+\[
+G = [I_r \mid M],
+\]
+a generator matrix for the dual code is
+\[
+H = [M^T \mid I_{m-r}].
+\]
+Now enumerate all dual codewords instead.
+
+Let \(A_i\) be the number of codewords in \(V\) with weight \(i\), and let \(B_j\) be the number of dual codewords with weight \(j\). The MacWilliams identity for binary linear codes gives
+\[
+A_i = \frac{1}{2^{m-r}} \sum_{j=0}^{m} B_j K_i(j),
+\]
+where
+\[
+K_i(j) = \sum_t (-1)^t \binom{j}{t}\binom{m-j}{i-t}
+\]
+is the binary Krawtchouk polynomial.
+
+So once the dual weight distribution is known, the primal weight distribution follows.
+
+\subsection{Algorithm}
+\begin{enumerate}
+\item Build a xor basis from the input numbers and convert it to reduced row-echelon form.
+\item Let \(r\) be the rank.
+\item If \(r \le 26\), enumerate all codewords of the span and count them by popcount.
+\item Otherwise construct a basis of the dual code from the free columns, enumerate all dual codewords, and recover the primal weight distribution with the MacWilliams formula.
+\item Multiply every count by \(2^{n-r}\), because each reachable xor value comes from that many subsets.
+\end{enumerate}
+
+\subsection{Why It Works}
+The xor basis captures exactly the reachable xor values. Row reduction does not change that vector space, it only puts it into a form where either the space itself or its dual can be enumerated efficiently.
+
+The constant factor \(2^{n-r}\) is standard: the map from subsets to xor values is a linear map from \(\mathbb{F}_2^n\) onto an \(r\)-dimensional image, so every image point has a kernel-sized preimage of size \(2^{n-r}\).
+
+In the large-rank case, the MacWilliams identity is the exact bridge between the weight distribution of a binary linear code and the weight distribution of its dual. That is why enumerating the dual is enough.
+
+\section{Pseudocode}
+Read \(n\) and \(m\).
+
+Build a xor basis of the input numbers.
+Convert the basis to reduced row-echelon form.
+Let \(r\) be the rank.
+
+If \(r \le 26\):
+\begin{itemize}
+\item enumerate all \(2^r\) xor combinations of the basis rows
+\item count how many results have each popcount
+\end{itemize}
+
+Otherwise:
+\begin{itemize}
+\item construct the dual basis from the free columns
+\item enumerate all \(2^{m-r}\) dual codewords
+\item count dual weights
+\item recover primal weights with the MacWilliams formula
+\end{itemize}
+
+Multiply every weight count by \(2^{n-r}\).
+Print the \(m+1\) answers.
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Basis construction and row reduction: \(O(nm + m^2)\)
+\item Enumeration: \(O(2^{\min(r,\,m-r)})\)
+\item MacWilliams recovery in the large-rank case: \(O(m^3)\), which is tiny here because \(m \le 53\)
+\item Memory: \(O(m^2)\) outside the temporary enumeration counters
+\end{itemize}
+
+\section{Notes}
+\begin{itemize}
+\item Use a 64-bit unsigned integer for the bitmasks. \(m \le 53\), so every codeword fits safely.
+\item Gray-code enumeration is a good fit here because only one basis vector changes between consecutive states.
+\item The modulo division by \(2^{m-r}\) is handled with modular inverses, not integer division.
+\end{itemize}

@@ -1,0 +1,10 @@
+{
+  "title": "Codeforces 3500+ Problems",
+  "description": "A deliberately small archive of very hard Codeforces problems, each published only after the reasoning and implementation are strong enough to stand as portfolio work.",
+  "statementPolicy": "Each page keeps an original summary and links to the official Codeforces statement instead of mirroring it.",
+  "startHere": {
+    "slug": "chiori-and-doll-picking-hard-version",
+    "label": "Start with the algebraic side",
+    "description": "The first batch opens with a linear-basis problem where the main challenge is deriving the correct counting model, not just writing the code."
+  }
+}

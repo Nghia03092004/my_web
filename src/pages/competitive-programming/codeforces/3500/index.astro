@@ -1,0 +1,188 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { formatDate } from '../../../../lib/content';
+import { withBase } from '../../../../lib/paths';
+import {
+	getCodeforces3500ArchiveMetadata,
+	getCodeforces3500ArchiveSummary,
+	getCodeforces3500ProblemRecords,
+} from '../../../../features/competitive-programming-codeforces/lib/codeforces3500';
+
+const [metadata, summary, records] = await Promise.all([
+	getCodeforces3500ArchiveMetadata(),
+	getCodeforces3500ArchiveSummary(),
+	getCodeforces3500ProblemRecords(),
+]);
+const startHere = metadata.startHere
+	? records.find((record) => record.slug === metadata.startHere?.slug)
+	: records[0];
+---
+
+<BaseLayout title="Codeforces 3500+ Problems" description={metadata.description}>
+	<section class="page-intro cp-intro">
+		<span class="eyebrow">Competitive Programming</span>
+		<h1>Codeforces 3500+ Problems</h1>
+		<p>
+			{metadata.description} {metadata.statementPolicy}
+		</p>
+		<div class="archive-summary">
+			<div class="archive-summary__item">
+				<strong>{summary.entryCount}</strong>
+				<span>published deep dives</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{summary.tagCount}</strong>
+				<span>technique tags in use</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>3500+</strong>
+				<span>rating floor</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{summary.latestUpdated ? formatDate(summary.latestUpdated) : 'n/a'}</strong>
+				<span>most recently updated page</span>
+			</div>
+		</div>
+		<div class="chip-row">
+			<a class="button" href={withBase('/competitive-programming')}>All competitive programming</a>
+			<a class="button button--ghost" href="https://codeforces.com/problemset">Official Codeforces problemset</a>
+		</div>
+	</section>
+
+	{
+		startHere ? (
+			<section class="section-panel">
+				<div class="section-heading">
+					<div>
+						<span class="section-label">Start here</span>
+						<h2>Begin with the first verified batch</h2>
+						<p>
+							This branch stays intentionally small. Problems only appear once the derivation, correctness
+							story, and implementation are all strong enough to publish.
+						</p>
+					</div>
+				</div>
+				<article class="card cses-highlight-card" data-tone="warm">
+					<span class="eyebrow">{startHere.contestLabel}</span>
+					<h3>{metadata.startHere?.label ?? startHere.title}</h3>
+					<p>{metadata.startHere?.description ?? startHere.summary}</p>
+					<div class="chip-row cses-card__chips">
+						<span class="chip" data-tone="warm">{startHere.rating}</span>
+						{startHere.tags.map((tag) => (
+							<span class="chip">{tag}</span>
+						))}
+					</div>
+					<div class="cses-card__actions">
+						<a
+							class="button"
+							href={withBase(`/competitive-programming/codeforces/3500/${startHere.slug}`)}
+						>
+							Open the write-up
+						</a>
+						<a class="button button--ghost" href={startHere.officialUrl}>
+							Official problem
+						</a>
+					</div>
+				</article>
+			</section>
+		) : null
+	}
+
+	<section class="section-panel">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Published problems</span>
+				<h2>Batch 1</h2>
+				<p>
+					Every page here keeps a short original summary, a long-form derivation, pseudocode when it adds
+					clarity, complexity analysis, and the exact C++ source file used by the page.
+				</p>
+			</div>
+		</div>
+
+		<div class="cp-year-grid">
+			{
+				records.map((record) => (
+					<article class="cp-year-card cp-year-card--browse">
+						<div class="cp-year-card__topline">
+							<div>
+								<strong>{record.contestLabel}</strong>
+								<span>{record.rating} rating</span>
+							</div>
+							<span class="chip" data-tone="warm">
+								{String(record.order).padStart(2, '0')}
+							</span>
+						</div>
+						<h3>{record.title}</h3>
+						<p class="cp-year-card__summary">{record.summary}</p>
+						<div class="chip-row">
+							{record.tags.map((tag) => (
+								<span class="chip">{tag}</span>
+							))}
+						</div>
+						<div class="cp-year-card__actions">
+							<a class="button" href={withBase(`/competitive-programming/codeforces/3500/${record.slug}`)}>
+								Open solution page
+							</a>
+							<a class="button button--ghost" href={record.officialUrl}>
+								Official problem
+							</a>
+						</div>
+					</article>
+				))
+			}
+		</div>
+	</section>
+
+	<section class="section-panel section-panel--signal">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Archive policy</span>
+				<h2>Why this branch is intentionally small</h2>
+				<p>
+					The point of this archive is not volume. A single hard problem only ships when the explanation can
+					show the failed naive directions, the actual turning point, and an implementation that matches the
+					argument.
+				</p>
+			</div>
+		</div>
+		<div class="signal-grid">
+			<a class="signal-card" data-tone="warm" href={withBase('/competitive-programming/codeforces/3500')}>
+				<span class="signal-card__index">01</span>
+				<div>
+					<span class="eyebrow">Statement policy</span>
+					<h3>Original summaries only</h3>
+					<p>Official statements are linked in the header of each page instead of being mirrored here.</p>
+				</div>
+				<div class="signal-card__meta">
+					<span class="metric">copyright-safe</span>
+					<span class="metric">portfolio-focused</span>
+				</div>
+			</a>
+			<a class="signal-card" data-tone="cool" href={withBase('/competitive-programming/codeforces/3500')}>
+				<span class="signal-card__index">02</span>
+				<div>
+					<span class="eyebrow">Batch size</span>
+					<h3>Only 2 to 5 at a time</h3>
+					<p>Each batch stays small enough that the reasoning and code can be checked properly before release.</p>
+				</div>
+				<div class="signal-card__meta">
+					<span class="metric">quality</span>
+					<span class="metric">no filler</span>
+				</div>
+			</a>
+			<a class="signal-card" data-tone="olive" href="https://codeforces.com/problemset">
+				<span class="signal-card__index">03</span>
+				<div>
+					<span class="eyebrow">Official source</span>
+					<h3>Use Codeforces for statements</h3>
+					<p>The site pages are solution archives. The full problem statements remain on Codeforces.</p>
+				</div>
+				<div class="signal-card__meta">
+					<span class="metric">official link</span>
+					<span class="metric">external source</span>
+				</div>
+			</a>
+		</div>
+	</section>
+</BaseLayout>

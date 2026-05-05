@@ -1,0 +1,12 @@
+{
+  "title": "Chiori and Doll Picking (hard version)",
+  "slug": "chiori-and-doll-picking-hard-version",
+  "contestId": 1336,
+  "index": "E2",
+  "rating": 3500,
+  "officialUrl": "https://codeforces.com/problemset/problem/1336/E2",
+  "tags": ["xor basis", "linear algebra", "weight enumerator", "macwilliams identity"],
+  "status": "solved",
+  "order": 1,
+  "summary": "For every k from 0 to m, count how many subsets have xor with exactly k set bits."
+}

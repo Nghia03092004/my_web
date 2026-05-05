@@ -1,0 +1,112 @@
+\section{Problem Summary}
+An interval \([l,r]\) is transformed into
+\[
+f([l,r]) = [\min(a_l,\dots,a_r), \max(a_l,\dots,a_r)].
+\]
+For each query interval, we need the minimum number of repeated applications of \(f\) needed to reach \([1,n]\), or report that this never happens.
+
+\section{Editorial}
+\subsection{Motivation}
+The function is not local in the usual sense: one application can move the interval far away, and naive simulation for every query is far too slow.
+
+The hard part is finding a state description that can be lifted by powers of two.
+
+\subsection{Key Observations}
+\begin{itemize}
+\item For a singleton interval \([i,i]\), the next state is just \([a_i,a_i]\). So singleton states are simple function composition on indices.
+\item The nontrivial states are intervals of length at least \(2\). For those, it is enough to understand what happens to adjacent pairs \([i,i+1]\).
+\item If two source intervals overlap at some index \(x\), then after applying \(f\), both resulting intervals contain \(a_x\). So overlapping source intervals always map to overlapping destination intervals.
+\item Because of that overlap property, the images of consecutive adjacent pairs remain a chain of overlapping intervals at every power of two.
+\end{itemize}
+
+\subsection{Derivation}
+Define
+\[
+g_t(i) = f^{2^t}([i,i+1])
+\]
+for \(1 \le i < n\), and
+\[
+p_t(i) = f^{2^t}([i,i])
+\]
+for singleton states.
+
+The singleton transition is immediate:
+\[
+p_0(i) = [a_i,a_i], \qquad p_{t+1}(i) = p_t(a_i) \text{ on the index level}.
+\]
+So we can store only the index reached by a singleton after \(2^t\) steps.
+
+Now look at any interval \([l,r]\) with \(l < r\). After one step,
+\[
+f([l,r]) = \bigcup_{i=l}^{r-1} f([i,i+1])
+\]
+in the interval sense: the minimum over the whole segment is the minimum of the pair-minima, and similarly for the maximum.
+
+The same remains true after every power of two. Inductively, the intervals \(g_t(l), g_t(l+1), \dots, g_t(r-1)\) overlap consecutively, so their union is again one interval. Applying \(f\) to that union is the same as taking the hull of the next-step images of those pair intervals. Therefore
+\[
+f^{2^t}([l,r]) = \operatorname{hull}_{i=l}^{r-1} g_t(i).
+\]
+
+That identity is the whole problem. Once every \(g_t(i)\) is known, any jump by \(2^t\) steps becomes:
+\begin{itemize}
+\item a singleton jump if the current interval has length \(1\)
+\item one range-hull query over the array \(g_t\) otherwise
+\end{itemize}
+
+\subsection{Algorithm}
+\begin{enumerate}
+\item Precompute singleton jumps \(p_t\) by repeated composition.
+\item Precompute pair jumps \(g_t\).
+  To build \(g_{t+1}(i)\):
+  \begin{itemize}
+  \item if \(g_t(i)\) is already a singleton \([x,x]\), then \(g_{t+1}(i) = p_t(x)\)
+  \item otherwise \(g_{t+1}(i)\) is the hull of \(g_t(x)\) for all adjacent pairs inside that interval, so one range query on level \(t\) is enough
+  \end{itemize}
+\item Use a sparse table on each level to answer those hull queries in \(O(1)\).
+\item For each query, binary-lift on the number of applications:
+  keep the current interval, try to add powers of two from large to small, and only accept a jump if it still does \emph{not} reach \([1,n]\).
+\end{enumerate}
+
+\subsection{Why It Works}
+The preprocessing is correct because it stores exactly the result of \(2^t\) applications for every adjacent pair and every singleton.
+
+The range-hull formula is correct because consecutive pair-images always overlap, so their union stays an interval, and applying \(f\) to that interval only depends on the minimum left endpoint and the maximum right endpoint among the next-step pieces.
+
+Binary lifting works because once \([1,n]\) is reached, it becomes a fixed point. Reaching \([1,n]\) means the array contains both values \(1\) and \(n\), hence the minimum and maximum over the full interval are still \(1\) and \(n\). So the predicate ``already reached \([1,n]\)'' is monotone in the number of steps.
+
+\section{Pseudocode}
+Read \(n\), the array, and the queries.
+
+Precompute singleton jumps for powers of two.
+Precompute pair jumps for powers of two:
+\begin{itemize}
+\item build a sparse table for the current pair level
+\item for each adjacent pair image:
+  \begin{itemize}
+  \item if it is a singleton, advance it with the singleton table
+  \item otherwise query the hull of all pair images inside that interval
+  \end{itemize}
+\end{itemize}
+
+For each query:
+\begin{itemize}
+\item if it is already \([1,n]\), print \(0\)
+\item if it is a singleton and \(n > 1\), print \(-1\)
+\item otherwise try powers of two from large to small
+\item keep every jump that still avoids \([1,n]\)
+\item after the loop, check whether one more step reaches \([1,n]\)
+\end{itemize}
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Preprocessing pair levels with sparse tables: \(O(n \log^2 n)\)
+\item Query phase: \(O(q \log n)\) once the levels are ready, plus another \(O(n \log^2 n)\) for the transient sparse tables used during binary lifting
+\item Memory: \(O(n \log n)\)
+\end{itemize}
+
+\section{Notes}
+\begin{itemize}
+\item A singleton query can never become \([1,n]\) when \(n > 1\), because singleton states always stay singletons.
+\item The implementation uses \(34\) lifting levels. That is safely above the number of distinct interval states for \(n \le 10^5\).
+\item The merge operation is just interval hull: take the minimum left endpoint and the maximum right endpoint.
+\end{itemize}
