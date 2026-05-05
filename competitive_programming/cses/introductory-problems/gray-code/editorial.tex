@@ -1,0 +1,38 @@
+\section{Problem Summary}
+Generate all binary strings of length \(n\) in an order where every consecutive pair differs in exactly one bit.
+
+\section{Editorial}
+A standard closed-form construction exists for Gray code:
+\[
+g(i) = i \oplus (i \gg 1),
+\]
+where \(i\) runs from \(0\) to \(2^n - 1\).
+
+Why does this help? Consecutive integers differ at one lowest changed bit plus a block of lower bits, and the xor-with-shift transformation folds that pattern into a representation where only one output bit changes between neighbors.
+
+So we can:
+\begin{itemize}
+\item iterate \(i\) from \(0\) to \(2^n - 1\)
+\item compute \(g(i)\)
+\item print \(g(i)\) as a binary string of exactly \(n\) bits
+\end{itemize}
+
+This is much simpler than building the list recursively, although the recursive reflection construction would also be valid.
+
+\section{Pseudocode}
+Set the limit to \(2^n\).
+
+For each integer \(i\) from \(0\) to \(\text{limit} - 1\):
+\begin{itemize}
+\item compute \(g = i \oplus (i \gg 1)\)
+\item print the \(n\)-bit binary representation of \(g\)
+\end{itemize}
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(n \cdot 2^n)\), dominated by printing \(2^n\) strings of length \(n\)
+\item Memory: \(O(1)\) besides the output itself
+\end{itemize}
+
+\section{Notes}
+Make sure to print leading zeroes so every line has exactly \(n\) characters.

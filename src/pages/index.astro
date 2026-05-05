@@ -9,11 +9,13 @@ import {
 	getCompetitiveProgrammingRecords,
 	getCompetitiveProgrammingTrackSummaries,
 } from '../features/competitive-programming/lib/competitive-programming';
+import { getCsesProblemRecords } from '../features/competitive-programming-cses/lib/cses';
 
-const [eulerEntries, competitiveProgrammingEntries, cpSummaries] = await Promise.all([
+const [eulerEntries, competitiveProgrammingEntries, cpSummaries, csesEntries] = await Promise.all([
 	getEulerRecords(),
 	getCompetitiveProgrammingRecords(),
 	getCompetitiveProgrammingTrackSummaries(),
+	getCsesProblemRecords(),
 ]);
 const featuredProblems = [1, 48, 250, 700].flatMap((problem) => {
 	const entry = eulerEntries.find((item) => item.problem === problem);
@@ -23,8 +25,10 @@ const latestEulerEntries = [...eulerEntries]
 	.sort((a, b) => b.updated.getTime() - a.updated.getTime())
 	.slice(0, 4);
 const totalEulerWords = eulerEntries.reduce((sum, entry) => sum + entry.wordCount, 0);
-const totalCompetitiveProgrammingEntries = competitiveProgrammingEntries.length;
-const totalSourceFiles = eulerEntries.length * 2 + totalCompetitiveProgrammingEntries * 2;
+const totalCompetitiveProgrammingEntries = competitiveProgrammingEntries.length + csesEntries.length;
+const totalSourceFiles =
+	eulerEntries.length * 2 + competitiveProgrammingEntries.length * 2 + csesEntries.length * 3;
+const totalMajorArchives = cpSummaries.length + 3;
 ---
 
 <BaseLayout
@@ -66,13 +70,13 @@ const totalSourceFiles = eulerEntries.length * 2 + totalCompetitiveProgrammingEn
 			<div class="hero-aside__panel hero-aside__panel--warm">
 				<span class="eyebrow">What lives here</span>
 				<p class="lede">
-					Mostly problem solving: Project Euler, ICPC, IOI, and short notes from things I am
+					Mostly problem solving: Project Euler, ICPC, IOI, CSES, and short notes from things I am
 					building or studying.
 				</p>
 				<p class="hero-note">
 					Project Euler is the deepest part of the site. The competitive programming section is now
-					organized by track, year, and problem so it is easy to browse instead of feeling like a
-					folder dump.
+					organized into ICPC, IOI, CSES, and a DSA notebook so it is easy to browse instead of
+					feeling like a folder dump.
 				</p>
 			</div>
 			<div class="hero-aside__panel hero-aside__panel--grid">
@@ -87,7 +91,7 @@ const totalSourceFiles = eulerEntries.length * 2 + totalCompetitiveProgrammingEn
 						<span class="stat__label">CP entries</span>
 					</div>
 					<div class="stat">
-						<span class="stat__value">{cpSummaries.length + 1}</span>
+						<span class="stat__value">{totalMajorArchives}</span>
 						<span class="stat__label">Major archives</span>
 					</div>
 					<div class="stat">
@@ -125,10 +129,11 @@ const totalSourceFiles = eulerEntries.length * 2 + totalCompetitiveProgrammingEn
 				<a class="card track-card" data-tone="cool" href={withBase('/competitive-programming')}>
 					<span class="track-card__index">02</span>
 					<span class="eyebrow">Competitive Programming</span>
-					<h3>ICPC and IOI, organized by contest year</h3>
+					<h3>ICPC, IOI, CSES, and the DSA notebook</h3>
 					<p>
 						{totalCompetitiveProgrammingEntries} problem pages with statement, editorial, and code
-						views, plus direct links to the original files when they are useful.
+						views across the contest archives, plus direct links to the original files when they are
+						useful.
 					</p>
 					<span class="track-card__link">Open the archive</span>
 				</a>
@@ -263,8 +268,8 @@ const totalSourceFiles = eulerEntries.length * 2 + totalCompetitiveProgrammingEn
 					<span class="stat__label">IOI entries</span>
 				</div>
 				<div class="stat">
-					<span class="stat__value">{cpSummaries.reduce((sum, summary) => sum + summary.yearCount, 0)}</span>
-					<span class="stat__label">CP contest years</span>
+					<span class="stat__value">{csesEntries.length}</span>
+					<span class="stat__label">CSES entries</span>
 				</div>
 			</div>
 		</section>

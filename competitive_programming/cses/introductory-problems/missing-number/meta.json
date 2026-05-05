@@ -1,0 +1,11 @@
+{
+  "title": "Missing Number",
+  "category": "Introductory Problems",
+  "slug": "missing-number",
+  "officialUrl": "https://cses.fi/problemset/task/1083",
+  "level": "basic",
+  "tags": ["math", "sum"],
+  "status": "solved",
+  "order": 2,
+  "summary": "One value from 1 through n is absent from the input list; recover it without sorting."
+}

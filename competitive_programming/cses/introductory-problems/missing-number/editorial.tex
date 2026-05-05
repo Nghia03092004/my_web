@@ -1,0 +1,21 @@
+\section{Problem Summary}
+You should receive every integer from \(1\) through \(n\), except that one value is missing. The task is to determine which value never appears.
+
+\section{Editorial}
+The full set \(1 + 2 + \cdots + n\) has a known sum:
+\[
+\frac{n(n + 1)}{2}.
+\]
+
+If we subtract the sum of the numbers that were actually provided, the remainder must be the missing value.
+
+That avoids sorting, marking arrays, or any more complicated bookkeeping. A single pass through the input is enough.
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(n)\)
+\item Memory: \(O(1)\)
+\end{itemize}
+
+\section{Notes}
+Compute the sums with 64-bit integers. The formula can overflow a 32-bit type even though the answer itself is small.

@@ -1,0 +1,30 @@
+\section{Problem Summary}
+Start from one positive integer \(n\). If the current value is even, divide it by \(2\); otherwise replace it with \(3n + 1\). Print every value in this chain until the sequence reaches \(1\).
+
+\section{Editorial}
+There is no optimization to discover here: the task is simply to simulate the process exactly as described.
+
+Keep printing the current value, then apply one step of the rule. The loop stops once the current value becomes \(1\), and then \(1\) should also appear in the output.
+
+The only practical detail is the numeric type. Even when the input fits comfortably in a 32-bit integer, the intermediate value \(3n + 1\) can grow past that range, so a 64-bit integer is the safe default.
+
+\section{Pseudocode}
+Read \(n\).
+
+While \(n\) is not \(1\):
+\begin{itemize}
+\item print \(n\)
+\item if \(n\) is even, replace it by \(n / 2\)
+\item otherwise, replace it by \(3n + 1\)
+\end{itemize}
+
+Print \(1\).
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(k)\), where \(k\) is the length of the produced sequence
+\item Memory: \(O(1)\)
+\end{itemize}
+
+\section{Notes}
+Use a 64-bit integer type so the odd-step update does not overflow.

@@ -1,0 +1,11 @@
+{
+  "title": "Increasing Array",
+  "category": "Introductory Problems",
+  "slug": "increasing-array",
+  "officialUrl": "https://cses.fi/problemset/task/1094",
+  "level": "basic",
+  "tags": ["greedy", "arrays"],
+  "status": "solved",
+  "order": 4,
+  "summary": "Count the minimum total increment needed to make the array non-decreasing."
+}

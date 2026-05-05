@@ -1,0 +1,11 @@
+{
+  "title": "Two Sets",
+  "category": "Introductory Problems",
+  "slug": "two-sets",
+  "officialUrl": "https://cses.fi/problemset/task/1092",
+  "level": "intermediate",
+  "tags": ["constructive", "greedy"],
+  "status": "solved",
+  "order": 8,
+  "summary": "Split 1 through n into two groups with equal sum, or report that such a partition does not exist."
+}

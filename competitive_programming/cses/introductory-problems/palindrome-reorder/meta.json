@@ -1,0 +1,11 @@
+{
+  "title": "Palindrome Reorder",
+  "category": "Introductory Problems",
+  "slug": "palindrome-reorder",
+  "officialUrl": "https://cses.fi/problemset/task/1755",
+  "level": "basic",
+  "tags": ["strings", "greedy", "counting"],
+  "status": "solved",
+  "order": 12,
+  "summary": "Rearrange the letters into a palindrome when possible, otherwise report that no such arrangement exists."
+}

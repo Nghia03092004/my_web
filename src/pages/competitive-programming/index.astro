@@ -12,17 +12,28 @@ import {
 	getCompetitiveProgrammingTrackSummaries,
 	getCompetitiveProgrammingYearGroups,
 } from '../../features/competitive-programming/lib/competitive-programming';
+import {
+	getCsesArchiveSummary,
+	getCsesProblemRecords,
+} from '../../features/competitive-programming-cses/lib/cses';
 
-const [summaries, allRecords, icpcYears, ioiYears, dsaCategories, dsaNotes] = await Promise.all([
+const [summaries, allRecords, csesSummary, csesRecords, icpcYears, ioiYears, dsaCategories, dsaNotes] = await Promise.all([
 	getCompetitiveProgrammingTrackSummaries(),
 	getCompetitiveProgrammingRecords(),
+	getCsesArchiveSummary(),
+	getCsesProblemRecords(),
 	getCompetitiveProgrammingYearGroups('icpc'),
 	getCompetitiveProgrammingYearGroups('ioi'),
 	getDsaCategoryRecords(),
 	getDsaNoteRecords(),
 ]);
-const totalEntries = summaries.reduce((sum, summary) => sum + summary.entryCount, 0);
-const latestUpdated = [...allRecords.map((record) => record.updated), ...dsaNotes.map((note) => note.updated)]
+const [icpcSummary, ioiSummary] = summaries;
+const totalEntries = summaries.reduce((sum, summary) => sum + summary.entryCount, 0) + csesSummary.entryCount;
+const latestUpdated = [
+	...allRecords.map((record) => record.updated),
+	...csesRecords.map((record) => record.updated),
+	...dsaNotes.map((note) => note.updated),
+]
 	.sort((left, right) => right.getTime() - left.getTime())[0];
 const featuredYears = [...icpcYears, ...ioiYears]
 	.sort((left, right) => {
@@ -33,21 +44,49 @@ const featuredYears = [...icpcYears, ...ioiYears]
 		return left.track.localeCompare(right.track);
 	})
 	.slice(0, 6);
-const latestEntries = [...allRecords].sort((left, right) => right.updated.getTime() - left.updated.getTime()).slice(0, 6);
-const publicBranches = [
-	...summaries.map((summary, index) => ({
-		key: summary.track,
-		href: withBase(`/competitive-programming/${summary.track}`),
-		tone: summary.track === 'icpc' ? 'warm' : 'cool',
-		indexLabel: `0${index + 1}`,
-		eyebrow: summary.label,
-		title: summary.longLabel,
-		description:
-			summary.track === 'icpc'
-				? `${summary.entryCount} problems across ${summary.yearCount} years. ${summary.statementTextCount} statement texts and ${summary.statementPdfCount} PDFs are mirrored in the archive.`
-				: `${summary.entryCount} problems across ${summary.yearCount} years. Each task page centers the write-up and code.`,
-		linkLabel: `Browse ${summary.label}`,
+const latestEntries = [
+	...allRecords.map((record) => ({
+		href: withBase(`/competitive-programming/${record.track}/${record.year}/${record.slug}`),
+		tone: record.track === 'icpc' ? 'warm' : 'cool',
+		eyebrow: `${record.track.toUpperCase()} ${record.year}`,
+		title: record.displayTitle,
+		description: record.statementPreview ?? record.description,
+		updated: record.updated,
+		detail: record.hasStatementText ? 'statement + editorial + code' : 'editorial + code',
 	})),
+	...csesRecords.map((record) => ({
+		href: withBase(`/competitive-programming/cses/${record.categorySlug}/${record.slug}`),
+		tone: 'cool',
+		eyebrow: `CSES ${record.categoryTitle}`,
+		title: record.title,
+		description: record.summary,
+		updated: record.updated,
+		detail: 'official link + editorial + code',
+	})),
+]
+	.sort((left, right) => right.updated.getTime() - left.updated.getTime())
+	.slice(0, 6);
+const publicBranches = [
+	{
+		key: 'icpc',
+		href: withBase('/competitive-programming/icpc'),
+		tone: 'warm',
+		indexLabel: '01',
+		eyebrow: icpcSummary.label,
+		title: icpcSummary.longLabel,
+		description: `${icpcSummary.entryCount} problems across ${icpcSummary.yearCount} years. ${icpcSummary.statementTextCount} statement texts and ${icpcSummary.statementPdfCount} PDFs are mirrored in the archive.`,
+		linkLabel: `Browse ${icpcSummary.label}`,
+	},
+	{
+		key: 'ioi',
+		href: withBase('/competitive-programming/ioi'),
+		tone: 'cool',
+		indexLabel: '02',
+		eyebrow: ioiSummary.label,
+		title: ioiSummary.longLabel,
+		description: `${ioiSummary.entryCount} problems across ${ioiSummary.yearCount} years. Each task page centers the write-up and code.`,
+		linkLabel: `Browse ${ioiSummary.label}`,
+	},
 	{
 		key: 'dsa',
 		href: withBase(getDsaRoutePath()),
@@ -58,20 +97,30 @@ const publicBranches = [
 		description: `${dsaNotes.length} published notes across ${dsaCategories.length} categories, all kept in TeX plus standalone C++ so the write-up and implementation stay editable.`,
 		linkLabel: 'Browse DSA notes',
 	},
+	{
+		key: 'cses',
+		href: withBase('/competitive-programming/cses'),
+		tone: 'cool',
+		indexLabel: '04',
+		eyebrow: 'CSES',
+		title: 'CSES Problem Set',
+		description: `${csesSummary.entryCount} published solutions across ${csesSummary.categoryCount} official categories, with original summaries, rendered editorials, and exact C++ source files.`,
+		linkLabel: 'Browse CSES',
+	},
 ];
 ---
 
 <BaseLayout
 	title="Competitive Programming"
-	description="ICPC, IOI, and data-structures-and-algorithms notes organized for browsing, revision, and reuse."
+	description="ICPC, IOI, CSES, and data-structures-and-algorithms notes organized for browsing, revision, and reuse."
 >
 	<section class="page-intro cp-intro">
 		<span class="eyebrow">Competitive Programming</span>
 		<h1>Contest archive plus long-form study notes.</h1>
 		<p>
-			This section has three public branches: the ICPC archive, the IOI archive, and a growing Data
-			Structures &amp; Algorithms notebook. The archive pages keep statements, editorials, and code together;
-			the DSA branch keeps reusable ideas in longer note form.
+			This section has four public branches: the ICPC archive, the IOI archive, the CSES archive, and a
+			growing Data Structures &amp; Algorithms notebook. The contest pages keep explanations and code tied
+			to source files; the DSA branch keeps reusable ideas in longer note form.
 		</p>
 		<div class="archive-summary">
 			<div class="archive-summary__item">
@@ -98,7 +147,7 @@ const publicBranches = [
 			<div>
 				<span class="section-label">Branches</span>
 				<h2>Start with a public branch</h2>
-				<p>The contest archive still browses by track and year, while the DSA branch is organized as a reusable knowledge base.</p>
+				<p>The contest archives browse by track/year or official category, while the DSA branch acts as a reusable knowledge base.</p>
 			</div>
 		</div>
 		<div class="track-grid">
@@ -179,20 +228,18 @@ const publicBranches = [
 				latestEntries.map((record, index) => (
 					<a
 						class="signal-card"
-						data-tone={record.track === 'icpc' ? 'warm' : 'cool'}
-						href={withBase(`/competitive-programming/${record.track}/${record.year}/${record.slug}`)}
+						data-tone={record.tone}
+						href={record.href}
 					>
 						<span class="signal-card__index">0{index + 1}</span>
 						<div>
-							<span class="eyebrow">
-								{record.track.toUpperCase()} {record.year}
-							</span>
-							<h3>{record.displayTitle}</h3>
-							<p>{record.statementPreview ?? record.description}</p>
+							<span class="eyebrow">{record.eyebrow}</span>
+							<h3>{record.title}</h3>
+							<p>{record.description}</p>
 						</div>
 						<div class="signal-card__meta">
 							<span class="metric">{formatDate(record.updated)}</span>
-							<span class="metric">{record.hasStatementText ? 'statement + editorial + code' : 'editorial + code'}</span>
+							<span class="metric">{record.detail}</span>
 						</div>
 					</a>
 				))

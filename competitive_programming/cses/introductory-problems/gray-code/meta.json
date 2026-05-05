@@ -1,0 +1,11 @@
+{
+  "title": "Gray Code",
+  "category": "Introductory Problems",
+  "slug": "gray-code",
+  "officialUrl": "https://cses.fi/problemset/task/2205",
+  "level": "intermediate",
+  "tags": ["bitmasks", "constructive"],
+  "status": "solved",
+  "order": 13,
+  "summary": "Print all n-bit Gray codes so that consecutive strings differ in exactly one bit."
+}

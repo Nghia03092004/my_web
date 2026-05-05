@@ -1,0 +1,11 @@
+{
+  "title": "Permutations",
+  "category": "Introductory Problems",
+  "slug": "permutations",
+  "officialUrl": "https://cses.fi/problemset/task/1070",
+  "level": "basic",
+  "tags": ["constructive", "permutation"],
+  "status": "solved",
+  "order": 5,
+  "summary": "Construct a permutation of 1 through n where neighboring values never differ by exactly 1."
+}

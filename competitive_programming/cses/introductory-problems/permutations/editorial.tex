@@ -1,0 +1,29 @@
+\section{Problem Summary}
+Reorder the numbers \(1, 2, \ldots, n\) so that every pair of neighboring values differs by something other than \(1\). If no such order exists, report that immediately.
+
+\section{Editorial}
+The small cases are the only impossible ones:
+\begin{itemize}
+\item \(n = 1\) is already valid
+\item \(n = 2\) and \(n = 3\) have no solution
+\end{itemize}
+
+For \(n \ge 4\), a simple construction works: print all even numbers first, then all odd numbers.
+
+Why does that help?
+\begin{itemize}
+\item inside the even block, consecutive numbers differ by \(2\)
+\item inside the odd block, consecutive numbers also differ by \(2\)
+\item the only boundary is from the largest even number to the smallest odd number, and for \(n \ge 4\) that gap is never \(1\)
+\end{itemize}
+
+So the entire permutation is valid.
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(n)\)
+\item Memory: \(O(1)\) besides the output itself
+\end{itemize}
+
+\section{Notes}
+Do not overcomplicate the construction. The even-then-odd ordering is the intended simple pattern.

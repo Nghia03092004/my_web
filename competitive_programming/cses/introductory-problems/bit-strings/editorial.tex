@@ -1,0 +1,25 @@
+\section{Problem Summary}
+Count the number of binary strings of length \(n\), and report the answer modulo \(10^9 + 7\).
+
+\section{Editorial}
+Each position has exactly two choices: \(0\) or \(1\). Therefore the total number of strings is
+\[
+2^n.
+\]
+
+The only real work is computing that power under a modulus. Fast exponentiation is the clean standard tool:
+\begin{itemize}
+\item repeatedly square the base
+\item multiply it into the answer whenever the current bit of the exponent is \(1\)
+\end{itemize}
+
+That keeps the arithmetic bounded by the modulus and runs in logarithmic time.
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(\log n)\)
+\item Memory: \(O(1)\)
+\end{itemize}
+
+\section{Notes}
+Even though a simple loop of \(n\) doublings would pass here, binary exponentiation scales better and keeps the implementation standard.

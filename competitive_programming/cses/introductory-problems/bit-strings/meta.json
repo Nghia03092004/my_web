@@ -1,0 +1,11 @@
+{
+  "title": "Bit Strings",
+  "category": "Introductory Problems",
+  "slug": "bit-strings",
+  "officialUrl": "https://cses.fi/problemset/task/1617",
+  "level": "basic",
+  "tags": ["modular arithmetic", "pow"],
+  "status": "solved",
+  "order": 9,
+  "summary": "Count how many binary strings of length n exist, modulo 1e9+7."
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Two Knights",
+  "category": "Introductory Problems",
+  "slug": "two-knights",
+  "officialUrl": "https://cses.fi/problemset/task/1072",
+  "level": "basic",
+  "tags": ["math", "counting"],
+  "status": "solved",
+  "order": 7,
+  "summary": "For every board size from 1 to n, count how many ways two knights can be placed without attacking each other."
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Tower of Hanoi",
+  "category": "Introductory Problems",
+  "slug": "tower-of-hanoi",
+  "officialUrl": "https://cses.fi/problemset/task/2165",
+  "level": "intermediate",
+  "tags": ["recursion", "constructive"],
+  "status": "solved",
+  "order": 14,
+  "summary": "Print the minimum sequence of moves that transfers all disks from the first peg to the third peg."
+}

@@ -1,0 +1,35 @@
+\section{Problem Summary}
+For each board size \(k = 1, 2, \ldots, n\), count the number of unordered placements of two knights on a \(k \times k\) chessboard such that they do not attack each other.
+
+\section{Editorial}
+Start with the total number of ways to choose two squares:
+\[
+\binom{k^2}{2} = \frac{k^2(k^2 - 1)}{2}.
+\]
+
+Now subtract the bad placements where the two knights attack each other.
+
+An attacking knight pair must occupy opposite corners of a \(2 \times 3\) or \(3 \times 2\) rectangle. On a \(k \times k\) board there are
+\[
+(k - 1)(k - 2)
+\]
+positions for each orientation, and each rectangle contributes \(2\) attacking placements. Since there are two orientations, the number of attacking pairs is
+\[
+4(k - 1)(k - 2).
+\]
+
+So the final answer is
+\[
+\frac{k^2(k^2 - 1)}{2} - 4(k - 1)(k - 2).
+\]
+
+There is no need for backtracking or board simulation once that counting argument is in place.
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(n)\)
+\item Memory: \(O(1)\)
+\end{itemize}
+
+\section{Notes}
+Print the answer for every board size independently. The formula also works for the small cases \(k = 1\) and \(k = 2\).

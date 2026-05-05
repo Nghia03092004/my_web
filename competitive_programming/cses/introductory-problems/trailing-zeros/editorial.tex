@@ -1,0 +1,32 @@
+\section{Problem Summary}
+Determine how many zeros the decimal representation of \(n!\) ends with, without ever constructing the factorial explicitly.
+
+\section{Editorial}
+A trailing zero comes from a factor of \(10\), which is \(2 \times 5\).
+
+In \(n!\), factors of \(2\) are much more common than factors of \(5\), so the answer is exactly the number of times \(5\) appears in the prime factorization of \(n!\).
+
+Count those \(5\)-factors in layers:
+\begin{itemize}
+\item every multiple of \(5\) contributes at least one factor of \(5\)
+\item every multiple of \(25\) contributes one extra factor
+\item every multiple of \(125\) contributes yet another extra factor
+\item and so on
+\end{itemize}
+
+So the answer is
+\[
+\left\lfloor \frac{n}{5} \right\rfloor +
+\left\lfloor \frac{n}{25} \right\rfloor +
+\left\lfloor \frac{n}{125} \right\rfloor + \cdots
+\]
+until the divisor exceeds \(n\).
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(\log_5 n)\)
+\item Memory: \(O(1)\)
+\end{itemize}
+
+\section{Notes}
+This is a counting problem, not a big-integer problem. Never try to build \(n!\) directly.

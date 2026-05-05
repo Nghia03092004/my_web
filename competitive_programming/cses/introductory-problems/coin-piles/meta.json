@@ -1,0 +1,11 @@
+{
+  "title": "Coin Piles",
+  "category": "Introductory Problems",
+  "slug": "coin-piles",
+  "officialUrl": "https://cses.fi/problemset/task/1754",
+  "level": "basic",
+  "tags": ["math", "invariants"],
+  "status": "solved",
+  "order": 11,
+  "summary": "Decide whether two piles can both be emptied when each move removes two coins from one pile and one coin from the other."
+}

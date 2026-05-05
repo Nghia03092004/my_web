@@ -2,18 +2,20 @@
 
 This directory is the source-backed archive for the website's **Competitive Programming** section.
 
-It currently combines two imported repositories:
+It currently combines three maintained archives plus the DSA notebook:
 
 - `ICPC`: copied from `C:\Users\ADMIN\Downloads\ICPC`
 - `IOI`: copied from `E:\IOI`
+- `CSES`: maintained directly in this repository under `competitive_programming/cses`
 
 The website reads the files in this directory directly at build time. The archive is intentionally organized so the editable source files stay obvious and stable.
 
 ## Source of truth
 
-For every imported problem entry:
+For every problem entry:
 
-- the written solution source of truth is the local `solution.tex`
+- the written solution source of truth is the local `solution.tex` for ICPC and IOI
+- the written solution source of truth is the local `editorial.tex` for CSES
 - the implementation source of truth is the local `solution.cpp`
 
 The website pages do not replace those files with hand-maintained HTML copies.
@@ -49,18 +51,33 @@ The file contents were not rewritten.
 
 The website copy does **not** keep local brute-force programs, stress scripts, binaries, or other ad-hoc verification artefacts from the source tree.
 
+### CSES
+
+The CSES archive is authored directly for this site instead of being imported from a separate local repository.
+
+Each solved problem keeps:
+
+- `editorial.tex`
+- `solution.cpp`
+- `meta.json`
+
+The category structure mirrors the official CSES problemset categories so future batches can be added without changing the route scheme.
+
 ## How the website uses this directory
 
 The Astro site scans `competitive_programming/` directly and builds:
 
 - `/competitive-programming`
+- `/competitive-programming/cses`
+- `/competitive-programming/cses/<category>`
+- `/competitive-programming/cses/<category>/<slug>`
 - `/competitive-programming/icpc`
 - `/competitive-programming/icpc/<year>`
 - `/competitive-programming/ioi`
 - `/competitive-programming/ioi/<year>`
 - per-entry pages under `/competitive-programming/<track>/<year>/<slug>`
 
-Each entry page exposes the exact copied TeX and C++ files. ICPC pages also expose copied statement assets when they exist.
+Each entry page exposes the exact copied or authored source files. ICPC pages also expose copied statement assets when they exist. CSES pages link to official statements instead of mirroring them.
 
 Public pages are intentionally written for readers first. Workflow notes such as source-of-truth and editing rules stay in this documentation instead of taking over the main site copy.
 
@@ -98,6 +115,16 @@ Do not edit the website pages to change the solution content. The website pages 
    - `solution.cpp`
 3. Rebuild the site.
 
+### Add a new CSES solution
+
+1. Create a problem folder under `competitive_programming/cses/<CATEGORY-SLUG>/`.
+2. Keep:
+   - `editorial.tex`
+   - `solution.cpp`
+   - `meta.json`
+3. Mark the problem `"status": "solved"` only when the editorial and code are both real.
+4. Rebuild the site.
+
 ## Re-importing from external source repositories
 
 The import used for this archive is scripted:
@@ -111,3 +138,5 @@ node tools/competitive-programming/import-sources.mjs --icpc "C:\Users\ADMIN\Dow
 ```
 
 That script refreshes the managed `competitive_programming/icpc` and `competitive_programming/ioi` trees from the external source folders while keeping the website-facing structure consistent.
+
+CSES is maintained directly in this repository, so it is not part of the import script.

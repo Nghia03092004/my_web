@@ -32,6 +32,7 @@ interface Props {
 	tags?: string[];
 	metaItems?: MetaItem[];
 	headings?: HeadingItem[];
+	headerLinks?: LinkItem[];
 	primaryLink?: LinkItem;
 	secondaryLinks?: LinkItem[];
 }
@@ -48,6 +49,7 @@ const {
 	tags = [],
 	metaItems = [],
 	headings = [],
+	headerLinks = [],
 	primaryLink,
 	secondaryLinks = [],
 } = Astro.props;
@@ -70,6 +72,15 @@ const visibleMetaItems = [
 				<span class="eyebrow">{eyebrow}</span>
 				<h1>{title}</h1>
 				<p>{description}</p>
+				{
+					headerLinks.length ? (
+						<div class="post-header__links">
+							{headerLinks.map((link) => (
+								<a class="button button--ghost" href={link.href}>{link.label}</a>
+							))}
+						</div>
+					) : null
+				}
 				<div class="meta-grid">
 					{
 						visibleMetaItems.map((item) => (

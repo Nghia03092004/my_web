@@ -1,0 +1,140 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { formatDate } from '../../../../lib/content';
+import { withBase } from '../../../../lib/paths';
+import {
+	getCsesArchiveMetadata,
+	getCsesCategoryRecord,
+	getCsesCategoryRecords,
+} from '../../../../features/competitive-programming-cses/lib/cses';
+
+export async function getStaticPaths() {
+	const categories = await getCsesCategoryRecords();
+
+	return categories.map((category) => ({
+		params: {
+			category: category.slug,
+		},
+	}));
+}
+
+const categorySlug = Astro.params.category;
+if (!categorySlug) {
+	throw new Error('Missing CSES category slug.');
+}
+
+const [metadata, category] = await Promise.all([
+	getCsesArchiveMetadata(),
+	getCsesCategoryRecord(categorySlug),
+]);
+
+if (!category) {
+	throw new Error(`Unknown CSES category: ${categorySlug}.`);
+}
+
+const uniqueTagCount = category.tags.length;
+const levelList = category.levels.length ? category.levels.join(', ') : 'n/a';
+---
+
+<BaseLayout title={category.title} description={category.description}>
+	<section class="page-intro cp-intro">
+		<span class="eyebrow">CSES Problem Set</span>
+		<h1>{category.title}</h1>
+		<p>
+			{category.description} {metadata.statementPolicy}
+		</p>
+		<div class="archive-summary">
+			<div class="archive-summary__item">
+				<strong>{category.solvedCount}</strong>
+				<span>published solutions</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{uniqueTagCount}</strong>
+				<span>distinct tags</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{levelList}</strong>
+				<span>levels in this category</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{category.latestUpdated ? formatDate(category.latestUpdated) : 'n/a'}</strong>
+				<span>most recently updated page</span>
+			</div>
+		</div>
+		<div class="chip-row">
+			<a class="button" href={withBase('/competitive-programming/cses')}>Back to CSES</a>
+			<a class="button button--ghost" href={withBase('/competitive-programming')}>
+				All competitive programming
+			</a>
+			<a class="button button--ghost" href="https://cses.fi/problemset/">
+				Official CSES problem set
+			</a>
+		</div>
+	</section>
+
+	<section class="section-panel">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Problems</span>
+				<h2>Published pages in this category</h2>
+				<p>
+					Solved pages include an original summary, rendered editorial, optional pseudocode, complexity
+					analysis, and the exact `solution.cpp` source file.
+				</p>
+			</div>
+		</div>
+
+		{
+			category.records.length ? (
+				<div class="problem-grid cses-problem-grid">
+					{category.records.map((record) => (
+						<article class="card cses-problem-card" data-tone={category.tone ?? 'cool'}>
+							<div class="cses-problem-card__header">
+								<div>
+									<span class="metric">
+										{record.categoryTitle} #{String(record.order).padStart(2, '0')}
+									</span>
+									<h3>{record.title}</h3>
+								</div>
+								<span class="chip" data-tone="olive">
+									{record.level}
+								</span>
+							</div>
+							<p>{record.summary}</p>
+							<div class="chip-row cses-card__chips">
+								<span class="chip" data-tone="cool">Solved</span>
+								{record.tags.map((tag) => (
+									<span class="chip">{tag}</span>
+								))}
+							</div>
+							<div class="cses-card__actions">
+								<a
+									class="button"
+									href={withBase(`/competitive-programming/cses/${record.categorySlug}/${record.slug}`)}
+								>
+									Open solution
+								</a>
+								<a class="button button--ghost" href={record.officialUrl}>
+									Official statement
+								</a>
+							</div>
+						</article>
+					))}
+				</div>
+			) : (
+				<article class="cp-year-card">
+					<div class="cp-year-card__topline">
+						<div>
+							<strong>No published pages yet</strong>
+							<span>this category is wired and ready for the next batch</span>
+						</div>
+					</div>
+					<p class="cp-year-card__summary">
+						The route already exists, but no solution pages are marked solved here yet. Problems will appear
+						once the source trio (`editorial.tex`, `solution.cpp`, `meta.json`) is added for them.
+					</p>
+				</article>
+			)
+		}
+	</section>
+</BaseLayout>

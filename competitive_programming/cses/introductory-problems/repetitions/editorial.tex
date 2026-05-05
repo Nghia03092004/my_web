@@ -1,0 +1,24 @@
+\section{Problem Summary}
+Given one string, find the maximum length of a contiguous segment where every character is the same.
+
+\section{Editorial}
+Only adjacent equal characters matter, so a left-to-right scan is enough.
+
+Maintain two values:
+\begin{itemize}
+\item the length of the current run of equal characters
+\item the best run length seen so far
+\end{itemize}
+
+When the current character matches the previous one, extend the current run. Otherwise start a new run of length \(1\). After each step, update the best answer.
+
+This avoids any need for frequency maps because the problem is about consecutive characters, not total counts.
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(n)\)
+\item Memory: \(O(1)\)
+\end{itemize}
+
+\section{Notes}
+Remember to handle the first character cleanly. Initializing both the current run and the answer to \(1\) works for every non-empty string.

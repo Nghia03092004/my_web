@@ -1,0 +1,24 @@
+\section{Problem Summary}
+You may increase array elements, but never decrease them. Find the minimum total amount added so that the final array becomes non-decreasing.
+
+\section{Editorial}
+Process the array from left to right and keep the largest value that the current position is allowed to have without breaking the non-decreasing order.
+
+If the next element is already at least that large, it can stay as it is and it becomes the new running maximum.
+
+If the next element is smaller, then the cheapest possible fix is to raise it exactly up to the running maximum. Any larger increase would only add unnecessary cost.
+
+So every step is forced:
+\begin{itemize}
+\item keep the value if it is large enough
+\item otherwise add the difference to the answer and pretend the value became the previous maximum
+\end{itemize}
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(n)\)
+\item Memory: \(O(1)\)
+\end{itemize}
+
+\section{Notes}
+The accumulated answer can become large, so store it in a 64-bit integer.

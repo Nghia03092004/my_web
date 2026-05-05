@@ -1,0 +1,90 @@
+{
+  "title": "CSES Problem Set",
+  "description": "Source-backed CSES solution archive with original summaries, rendered editorials, pseudocode when it helps, and exact C++ implementations.",
+  "statementPolicy": "Official CSES statements are linked on every page instead of being mirrored here.",
+  "startHere": {
+    "category": "introductory-problems",
+    "slug": "weird-algorithm",
+    "label": "Weird Algorithm",
+    "description": "The archive starts with the opening Introductory Problems so the workflow can scale cleanly to later categories."
+  },
+  "categories": [
+    {
+      "slug": "introductory-problems",
+      "title": "Introductory Problems",
+      "description": "Short constructive, simulation, and arithmetic tasks that make good first passes for the archive.",
+      "order": 1,
+      "tone": "cool"
+    },
+    {
+      "slug": "sorting-and-searching",
+      "title": "Sorting and Searching",
+      "description": "Order statistics, greedy scheduling, binary search, and multiset-driven problem solving.",
+      "order": 2,
+      "tone": "warm"
+    },
+    {
+      "slug": "dynamic-programming",
+      "title": "Dynamic Programming",
+      "description": "Counting, optimization, and state-transition problems where the recurrence matters as much as the code.",
+      "order": 3,
+      "tone": "olive"
+    },
+    {
+      "slug": "graph-algorithms",
+      "title": "Graph Algorithms",
+      "description": "Traversal, shortest paths, connectivity, DAG reasoning, and graph decomposition techniques.",
+      "order": 4,
+      "tone": "expert"
+    },
+    {
+      "slug": "range-queries",
+      "title": "Range Queries",
+      "description": "Fenwick trees, segment trees, sparse tables, and offline ideas for interval-heavy tasks.",
+      "order": 5,
+      "tone": "cool"
+    },
+    {
+      "slug": "tree-algorithms",
+      "title": "Tree Algorithms",
+      "description": "Subtree aggregation, rerooting, LCA, and other tree-specific techniques.",
+      "order": 6,
+      "tone": "olive"
+    },
+    {
+      "slug": "mathematics",
+      "title": "Mathematics",
+      "description": "Number theory, modular arithmetic, counting formulas, and constructive math.",
+      "order": 7,
+      "tone": "warm"
+    },
+    {
+      "slug": "string-algorithms",
+      "title": "String Algorithms",
+      "description": "Pattern matching, automata, rolling hashes, suffix structures, and combinatorics on strings.",
+      "order": 8,
+      "tone": "cool"
+    },
+    {
+      "slug": "geometry",
+      "title": "Geometry",
+      "description": "Coordinate geometry, intersections, orientation tests, convex hulls, and sweepline reasoning.",
+      "order": 9,
+      "tone": "expert"
+    },
+    {
+      "slug": "advanced-techniques",
+      "title": "Advanced Techniques",
+      "description": "Harder combinations of data structures, optimizations, and structural observations.",
+      "order": 10,
+      "tone": "expert"
+    },
+    {
+      "slug": "additional-problems",
+      "title": "Additional Problems",
+      "description": "Mixed follow-on problems that extend beyond the core category ladder.",
+      "order": 11,
+      "tone": "olive"
+    }
+  ]
+}

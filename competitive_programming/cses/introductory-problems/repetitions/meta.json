@@ -1,0 +1,11 @@
+{
+  "title": "Repetitions",
+  "category": "Introductory Problems",
+  "slug": "repetitions",
+  "officialUrl": "https://cses.fi/problemset/task/1069",
+  "level": "basic",
+  "tags": ["strings", "scan"],
+  "status": "solved",
+  "order": 3,
+  "summary": "Find the longest contiguous block of equal characters in the given string."
+}

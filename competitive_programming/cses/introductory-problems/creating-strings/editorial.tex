@@ -1,0 +1,37 @@
+\section{Problem Summary}
+Given a string that may contain repeated characters, list every distinct permutation in lexicographic order and print how many such permutations there are.
+
+\section{Editorial}
+The duplicates are the only complication. If every character were distinct, ordinary permutation generation would be enough. With repeated characters, we must avoid printing the same arrangement more than once.
+
+Sorting the string first solves both requirements at once:
+\begin{itemize}
+\item the first arrangement becomes the lexicographically smallest one
+\item repeated calls to \texttt{next\_permutation} visit each distinct arrangement in sorted order
+\end{itemize}
+
+This works because equal characters are indistinguishable. Starting from the sorted string ensures the algorithm walks through the multiset permutations without manual deduplication tables.
+
+Since the input is small, storing all permutations before printing them is completely reasonable and makes it easy to print the count first.
+
+\section{Pseudocode}
+Sort the string.
+
+Create an empty list of answers.
+
+Do:
+\begin{itemize}
+\item add the current string to the answer list
+\end{itemize}
+while another lexicographically larger permutation exists.
+
+Print the number of stored strings, then print each one.
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(k \cdot n)\), where \(k\) is the number of distinct permutations
+\item Memory: \(O(k \cdot n)\) when storing the permutations before printing
+\end{itemize}
+
+\section{Notes}
+For this problem size, the output dominates everything else, so a simple library-based permutation loop is the right tradeoff.

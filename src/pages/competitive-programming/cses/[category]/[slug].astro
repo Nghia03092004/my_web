@@ -1,0 +1,223 @@
+---
+import CompetitiveProgrammingEditorial from '../../../../features/competitive-programming/components/CompetitiveProgrammingEditorial.astro';
+import LatexContentPanel from '../../../../features/competitive-programming/components/LatexContentPanel.astro';
+import CompetitiveProgrammingResources from '../../../../features/competitive-programming/components/CompetitiveProgrammingResources.astro';
+import CompetitiveProgrammingSourceTabs from '../../../../features/competitive-programming/components/CompetitiveProgrammingSourceTabs.astro';
+import CsesProblemPagination from '../../../../features/competitive-programming-cses/components/CsesProblemPagination.astro';
+import {
+	getCsesCategoryRecord,
+	getCsesProblemRecord,
+	getCsesProblemRecords,
+	getCsesProblemSources,
+} from '../../../../features/competitive-programming-cses/lib/cses';
+import { parseCsesEditorial } from '../../../../features/competitive-programming-cses/lib/cses-editorial';
+import { renderLatexContent } from '../../../../features/competitive-programming/lib/latex-editorial';
+import PostLayout from '../../../../layouts/PostLayout.astro';
+import { withBase } from '../../../../lib/paths';
+
+export async function getStaticPaths() {
+	const records = await getCsesProblemRecords();
+
+	return records.map((record) => ({
+		params: {
+			category: record.categorySlug,
+			slug: record.slug,
+		},
+	}));
+}
+
+const categorySlug = Astro.params.category;
+const slug = Astro.params.slug;
+if (!categorySlug || !slug) {
+	throw new Error('Missing CSES route parameters.');
+}
+
+const record = await getCsesProblemRecord(categorySlug, slug);
+if (!record) {
+	throw new Error(`CSES entry not found for ${categorySlug}/${slug}.`);
+}
+
+const [category, sources] = await Promise.all([
+	getCsesCategoryRecord(categorySlug),
+	getCsesProblemSources(record),
+]);
+
+if (!category) {
+	throw new Error(`CSES category not found for ${categorySlug}.`);
+}
+
+const parsedEditorial = parseCsesEditorial(sources.editorial);
+const summarySection = renderLatexContent(parsedEditorial.summary?.content ?? record.summary, {
+	headingDepthOffset: 2,
+	headingSlugPrefix: `cses-summary-${record.id}`,
+});
+const editorialSection = renderLatexContent(parsedEditorial.editorial?.content ?? sources.editorial, {
+	headingDepthOffset: 2,
+	headingSlugPrefix: `cses-editorial-${record.id}`,
+});
+const pseudocodeSection = parsedEditorial.pseudocode
+	? renderLatexContent(parsedEditorial.pseudocode.content, {
+			headingDepthOffset: 2,
+			headingSlugPrefix: `cses-pseudocode-${record.id}`,
+		})
+	: undefined;
+const complexitySection = parsedEditorial.complexity
+	? renderLatexContent(parsedEditorial.complexity.content, {
+			headingDepthOffset: 2,
+			headingSlugPrefix: `cses-complexity-${record.id}`,
+		})
+	: undefined;
+const notesSection = parsedEditorial.notes
+	? renderLatexContent(parsedEditorial.notes.content, {
+			headingDepthOffset: 2,
+			headingSlugPrefix: `cses-notes-${record.id}`,
+		})
+	: undefined;
+const currentIndex = category.records.findIndex((entry) => entry.id === record.id);
+const previousRecord = currentIndex > 0 ? category.records[currentIndex - 1] : undefined;
+const nextRecord =
+	currentIndex >= 0 && currentIndex < category.records.length - 1 ? category.records[currentIndex + 1] : undefined;
+const categoryPagePath = `/competitive-programming/cses/${record.categorySlug}`;
+
+const headings = [
+	{ depth: 2, slug: 'problem-summary', text: 'Problem Summary' },
+	{ depth: 2, slug: 'editorial', text: 'Editorial' },
+	...editorialSection.headings,
+	...(pseudocodeSection ? [{ depth: 2, slug: 'pseudocode', text: 'Pseudocode' }] : []),
+	...(complexitySection ? [{ depth: 2, slug: 'complexity-analysis', text: 'Complexity Analysis' }] : []),
+	{ depth: 2, slug: 'code', text: 'C++ Solution' },
+	...(notesSection ? [{ depth: 2, slug: 'notes', text: 'Notes / Pitfalls' }] : []),
+	{ depth: 2, slug: 'source-files', text: 'Source Files and Assets' },
+];
+
+const resourceLinks = [
+	{
+		label: 'Editorial TeX',
+		href: record.assetUrls.editorial,
+		path: record.sourcePaths.editorial,
+	},
+	{
+		label: 'C++ implementation',
+		href: record.assetUrls.cpp,
+		path: record.sourcePaths.cpp,
+	},
+	{
+		label: 'Metadata',
+		href: record.assetUrls.meta,
+		path: record.sourcePaths.meta,
+	},
+];
+---
+
+<PostLayout
+	title={record.title}
+	description={record.summary}
+	published={record.updated}
+	publishedLabel="Updated"
+	eyebrow={`CSES • ${record.categoryTitle}`}
+	backHref={categoryPagePath}
+	backLabel={record.categoryTitle}
+	tags={record.tags}
+	metaItems={[
+		{ label: 'Archive', value: 'CSES Problem Set' },
+		{ label: 'Category', value: record.categoryTitle },
+		{ label: 'Level', value: record.level },
+		{ label: 'Status', value: 'Solved' },
+	]}
+	headings={headings}
+	headerLinks={[
+		{ label: 'Official statement', href: record.officialUrl },
+	]}
+	primaryLink={{
+		label: `Browse ${record.categoryTitle}`,
+		href: withBase(categoryPagePath),
+	}}
+	secondaryLinks={[
+		{
+			label: 'All CSES',
+			href: withBase('/competitive-programming/cses'),
+		},
+		{
+			label: 'Official CSES',
+			href: 'https://cses.fi/problemset/',
+		},
+	]}
+>
+	<LatexContentPanel
+		sectionId="problem-summary"
+		label="Problem summary"
+		title="Problem Summary"
+		description="Original task summary for this archive page. The official CSES statement is linked in the header instead of being mirrored here."
+		html={summarySection.html}
+		usedFallback={summarySection.usedFallback}
+	/>
+
+	<CompetitiveProgrammingEditorial
+		html={editorialSection.html}
+		rawUrl={record.assetUrls.editorial}
+		usedFallback={editorialSection.usedFallback}
+	/>
+
+	{
+		pseudocodeSection ? (
+			<LatexContentPanel
+				sectionId="pseudocode"
+				label="Pseudocode"
+				title="Pseudocode"
+				description="Natural algorithm flow before dropping to the concrete C++ implementation."
+				html={pseudocodeSection.html}
+				usedFallback={pseudocodeSection.usedFallback}
+			/>
+		) : null
+	}
+
+	{
+		complexitySection ? (
+			<LatexContentPanel
+				sectionId="complexity-analysis"
+				label="Complexity"
+				title="Complexity Analysis"
+				description="Time and memory costs for the approach used in the implementation below."
+				html={complexitySection.html}
+				usedFallback={complexitySection.usedFallback}
+			/>
+		) : null
+	}
+
+	<CompetitiveProgrammingSourceTabs
+		rootId={`cses-code-${record.id}`}
+		sectionId="code"
+		sectionLabel="Implementation"
+		title="C++ Solution"
+		description="The exact repository source used for this solution page."
+		showPaths={false}
+		tabs={[
+			{
+				id: 'cpp',
+				label: 'C++',
+				description: 'C++17 solution used on this page, with a copy button that targets the real source file contents.',
+				path: record.sourcePaths.cpp,
+				rawUrl: record.assetUrls.cpp,
+				languageClass: 'language-cpp',
+				source: sources.cpp,
+			},
+		]}
+	/>
+
+	{
+		notesSection ? (
+			<LatexContentPanel
+				sectionId="notes"
+				label="Notes"
+				title="Notes / Pitfalls"
+				description="Short reminders about edge cases, construction details, or common mistakes."
+				html={notesSection.html}
+				usedFallback={notesSection.usedFallback}
+			/>
+		) : null
+	}
+
+	<CompetitiveProgrammingResources links={resourceLinks} />
+
+	<CsesProblemPagination previous={previousRecord} next={nextRecord} />
+</PostLayout>

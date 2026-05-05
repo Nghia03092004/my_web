@@ -1,0 +1,11 @@
+{
+  "title": "Weird Algorithm",
+  "category": "Introductory Problems",
+  "slug": "weird-algorithm",
+  "officialUrl": "https://cses.fi/problemset/task/1068",
+  "level": "basic",
+  "tags": ["simulation", "math"],
+  "status": "solved",
+  "order": 1,
+  "summary": "Generate the Collatz sequence starting from n and print every value until the sequence reaches 1."
+}

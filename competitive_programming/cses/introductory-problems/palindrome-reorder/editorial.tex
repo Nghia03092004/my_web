@@ -1,0 +1,30 @@
+\section{Problem Summary}
+Rearrange the characters of the given uppercase string so that the result reads the same forward and backward. If no palindrome can be formed, print that clearly.
+
+\section{Editorial}
+A palindrome is controlled by character counts:
+\begin{itemize}
+\item every character used in the left half must also appear in the right half
+\item therefore almost every count must be even
+\item at most one character may have an odd count, because only the middle position can stay unmatched
+\end{itemize}
+
+So the algorithm is:
+\begin{itemize}
+\item count how many times each character appears
+\item if more than one count is odd, the answer is impossible
+\item otherwise build the left half from \(\lfloor \text{count} / 2 \rfloor\) copies of each letter
+\item put the odd-count character, if it exists, in the middle
+\item mirror the left half to obtain the right half
+\end{itemize}
+
+There is no need for search or backtracking. Once the counts are known, the structure of the palindrome is forced.
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(n + \sigma)\), where \(\sigma\) is the alphabet size
+\item Memory: \(O(\sigma)\)
+\end{itemize}
+
+\section{Notes}
+For uppercase English letters, \(\sigma = 26\), so the counting array is tiny.

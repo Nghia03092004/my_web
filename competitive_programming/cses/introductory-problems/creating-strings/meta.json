@@ -1,0 +1,11 @@
+{
+  "title": "Creating Strings",
+  "category": "Introductory Problems",
+  "slug": "creating-strings",
+  "officialUrl": "https://cses.fi/problemset/task/1622",
+  "level": "intermediate",
+  "tags": ["strings", "permutations", "backtracking"],
+  "status": "solved",
+  "order": 15,
+  "summary": "Enumerate every distinct permutation of the given string in lexicographic order."
+}

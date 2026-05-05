@@ -1,0 +1,42 @@
+\section{Problem Summary}
+Move a stack of disks from peg \(1\) to peg \(3\), using peg \(2\) as auxiliary storage, while never placing a larger disk on top of a smaller one. Print the minimum number of moves and one optimal sequence.
+
+\section{Editorial}
+The recursive structure is the whole problem.
+
+To move \(n\) disks from peg \(A\) to peg \(C\):
+\begin{itemize}
+\item first move the top \(n - 1\) disks from \(A\) to the spare peg \(B\)
+\item then move the largest disk from \(A\) to \(C\)
+\item finally move the \(n - 1\) disks from \(B\) to \(C\)
+\end{itemize}
+
+That decomposition is forced, because the largest disk cannot move until every smaller disk has been cleared away, and once it moves, those smaller disks must still be transferred onto it.
+
+The minimum move count therefore satisfies
+\[
+T(n) = 2T(n - 1) + 1,
+\]
+with \(T(1) = 1\), so
+\[
+T(n) = 2^n - 1.
+\]
+
+\section{Pseudocode}
+To move \(n\) disks from peg \(A\) to peg \(C\) using peg \(B\):
+
+\begin{itemize}
+\item if \(n = 0\), stop
+\item recursively move \(n - 1\) disks from \(A\) to \(B\)
+\item print the move \(A \to C\)
+\item recursively move \(n - 1\) disks from \(B\) to \(C\)
+\end{itemize}
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(2^n)\), because that many moves must be printed
+\item Memory: \(O(n)\) recursion depth
+\end{itemize}
+
+\section{Notes}
+The output size already forces exponential work, so recursion is perfectly natural here.

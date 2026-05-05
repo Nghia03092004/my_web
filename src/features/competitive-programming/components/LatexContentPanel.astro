@@ -1,0 +1,151 @@
+---
+import { withBase } from '../../../lib/paths';
+
+interface Props {
+	sectionId: string;
+	label: string;
+	title: string;
+	description: string;
+	html: string;
+	rawUrl?: string;
+	rawLabel?: string;
+	usedFallback?: boolean;
+}
+
+const {
+	sectionId,
+	label,
+	title,
+	description,
+	html,
+	rawUrl,
+	rawLabel = 'Raw TeX',
+	usedFallback = false,
+} = Astro.props;
+---
+
+<section class="cp-content panel" id={sectionId}>
+	<div class="cp-content__header">
+		<div>
+			<span class="section-label">{label}</span>
+			<h2>{title}</h2>
+			<p>{description}</p>
+		</div>
+		{rawUrl ? (
+			<div class="cp-content__actions">
+				<a class="button button--ghost" href={withBase(rawUrl)}>{rawLabel}</a>
+			</div>
+		) : null}
+	</div>
+
+	{
+		usedFallback ? (
+			<p class="cp-content__notice">
+				This section falls back to raw TeX because the conversion was not reliable enough for a cleaner render.
+			</p>
+		) : null
+	}
+
+	<div class="cp-content__body" data-cp-math-content set:html={html} />
+</section>
+
+<script is:inline>
+	const ensureMathJax = () => {
+		if (window.MathJax?.typesetPromise) {
+			return Promise.resolve(window.MathJax);
+		}
+
+		if (window.__siteMathJaxPromise) {
+			return window.__siteMathJaxPromise;
+		}
+
+		window.MathJax = {
+			tex: {
+				tags: 'ams',
+				inlineMath: [
+					['\\(', '\\)'],
+					['$', '$'],
+				],
+				displayMath: [
+					['\\[', '\\]'],
+					['$$', '$$'],
+				],
+				processEscapes: true,
+				processEnvironments: true,
+			},
+			options: {
+				skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+			},
+			startup: {
+				typeset: false,
+			},
+		};
+
+		window.__siteMathJaxPromise = new Promise((resolve, reject) => {
+			const existingScript = document.getElementById('mathjax-script');
+			if (existingScript) {
+				existingScript.addEventListener('load', () => resolve(window.MathJax), { once: true });
+				existingScript.addEventListener('error', reject, { once: true });
+				return;
+			}
+
+			const script = document.createElement('script');
+			script.id = 'mathjax-script';
+			script.async = true;
+			script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js';
+			script.addEventListener('load', () => resolve(window.MathJax), { once: true });
+			script.addEventListener('error', reject, { once: true });
+			document.head.appendChild(script);
+		});
+
+		return window.__siteMathJaxPromise;
+	};
+
+	const renderMathContent = async () => {
+		const roots = Array.from(document.querySelectorAll('[data-cp-math-content]'));
+		if (!roots.length) {
+			return;
+		}
+
+		try {
+			await ensureMathJax();
+			for (const root of roots) {
+				if (root.dataset.mathRendered === 'true') {
+					continue;
+				}
+
+				await window.MathJax.typesetPromise([root]);
+				root.dataset.mathRendered = 'true';
+			}
+		} catch (error) {
+			console.error('Failed to render LaTeX content.', error);
+		}
+	};
+
+	const resetMathContent = () => {
+		document.querySelectorAll('[data-cp-math-content]').forEach((root) => {
+			if (root instanceof HTMLElement) {
+				root.dataset.mathRendered = 'false';
+			}
+		});
+	};
+
+	if (document.readyState === 'loading') {
+		document.addEventListener(
+			'DOMContentLoaded',
+			() => {
+				resetMathContent();
+				void renderMathContent();
+			},
+			{ once: true },
+		);
+	} else {
+		resetMathContent();
+		void renderMathContent();
+	}
+
+	document.addEventListener('astro:page-load', () => {
+		resetMathContent();
+		void renderMathContent();
+	});
+</script>

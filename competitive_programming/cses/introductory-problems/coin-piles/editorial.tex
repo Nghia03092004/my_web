@@ -1,0 +1,28 @@
+\section{Problem Summary}
+Each move removes \(2\) coins from one pile and \(1\) coin from the other. For each pair of pile sizes, decide whether it is possible to empty both piles exactly.
+
+\section{Editorial}
+Two conditions are necessary.
+
+First, every move removes exactly \(3\) coins in total, so the combined number of coins must be divisible by \(3\):
+\[
+(a + b) \bmod 3 = 0.
+\]
+
+Second, one pile cannot be too large compared with the other. In every move, the larger pile can lose at most \(2\) coins while the smaller pile loses at least \(1\). If one pile starts with more than twice as many coins as the other, the smaller pile will run out too early. That gives
+\[
+\max(a, b) \le 2 \cdot \min(a, b).
+\]
+
+These conditions are also sufficient. When both hold, the piles can be reduced to zero by choosing which pile loses \(2\) coins at each step.
+
+So the entire problem collapses to a constant-time arithmetic check.
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(1)\) per test case
+\item Memory: \(O(1)\)
+\end{itemize}
+
+\section{Notes}
+Do not simulate the moves. The arithmetic conditions fully characterize the answer.

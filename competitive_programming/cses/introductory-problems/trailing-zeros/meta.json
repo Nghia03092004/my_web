@@ -1,0 +1,11 @@
+{
+  "title": "Trailing Zeros",
+  "category": "Introductory Problems",
+  "slug": "trailing-zeros",
+  "officialUrl": "https://cses.fi/problemset/task/1618",
+  "level": "basic",
+  "tags": ["factorials", "number theory"],
+  "status": "solved",
+  "order": 10,
+  "summary": "Count how many zeros appear at the end of n! without computing the factorial itself."
+}

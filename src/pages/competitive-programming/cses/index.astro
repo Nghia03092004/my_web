@@ -1,0 +1,180 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { formatDate } from '../../../lib/content';
+import { withBase } from '../../../lib/paths';
+import {
+	getCsesArchiveMetadata,
+	getCsesArchiveSummary,
+	getCsesCategoryRecords,
+	getCsesProblemRecords,
+} from '../../../features/competitive-programming-cses/lib/cses';
+
+const [metadata, summary, categories, records] = await Promise.all([
+	getCsesArchiveMetadata(),
+	getCsesArchiveSummary(),
+	getCsesCategoryRecords(),
+	getCsesProblemRecords(),
+]);
+const startHere = metadata.startHere
+	? records.find(
+			(record) =>
+				record.categorySlug === metadata.startHere?.category && record.slug === metadata.startHere?.slug,
+		)
+	: records[0];
+const latestEntries = [...records]
+	.sort((left, right) => right.updated.getTime() - left.updated.getTime())
+	.slice(0, 6);
+---
+
+<BaseLayout title="CSES Problem Set" description={metadata.description}>
+	<section class="page-intro cp-intro">
+		<span class="eyebrow">Competitive Programming</span>
+		<h1>CSES Problem Set</h1>
+		<p>
+			{metadata.description} {metadata.statementPolicy}
+		</p>
+		<div class="archive-summary">
+			<div class="archive-summary__item">
+				<strong>{summary.entryCount}</strong>
+				<span>published solutions</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{summary.categoryCount}</strong>
+				<span>supported categories</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{summary.activeCategoryCount}</strong>
+				<span>categories with published work</span>
+			</div>
+			<div class="archive-summary__item">
+				<strong>{summary.latestUpdated ? formatDate(summary.latestUpdated) : 'n/a'}</strong>
+				<span>most recently updated page</span>
+			</div>
+		</div>
+		<div class="chip-row">
+			<a class="button" href={withBase('/competitive-programming')}>All competitive programming</a>
+			<a class="button button--ghost" href="https://cses.fi/problemset/">Official CSES problem set</a>
+		</div>
+	</section>
+
+	{
+		startHere ? (
+			<section class="section-panel">
+				<div class="section-heading">
+					<div>
+						<span class="section-label">Start here</span>
+						<h2>Begin with the introductory batch</h2>
+						<p>
+							The first published batch covers the opening run of Introductory Problems so the archive can
+							grow from a stable base instead of a one-off dump.
+						</p>
+					</div>
+				</div>
+				<article class="card cses-highlight-card" data-tone="cool">
+					<span class="eyebrow">{startHere.categoryTitle}</span>
+					<h3>{metadata.startHere?.label ?? startHere.title}</h3>
+					<p>{metadata.startHere?.description ?? startHere.summary}</p>
+					<div class="chip-row cses-card__chips">
+						<span class="chip" data-tone="cool">{startHere.level}</span>
+						{startHere.tags.map((tag) => (
+							<span class="chip">{tag}</span>
+						))}
+					</div>
+					<div class="cses-card__actions">
+						<a
+							class="button"
+							href={withBase(`/competitive-programming/cses/${startHere.categorySlug}/${startHere.slug}`)}
+						>
+							Open the solution
+						</a>
+						<a
+							class="button button--ghost"
+							href={withBase(`/competitive-programming/cses/${startHere.categorySlug}`)}
+						>
+							Browse {startHere.categoryTitle}
+						</a>
+					</div>
+				</article>
+			</section>
+		) : null
+	}
+
+	<section class="section-panel">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Categories</span>
+				<h2>Archive by official CSES category</h2>
+				<p>
+					Each category page lists the published solutions, their tags, levels, original summaries, and
+					direct links back to the official statement.
+				</p>
+			</div>
+		</div>
+
+		<div class="cp-year-grid">
+			{
+				categories.map((category) => (
+					<article class="cp-year-card cp-year-card--browse">
+						<div class="cp-year-card__topline">
+							<div>
+								<strong>{category.title}</strong>
+								<span>{category.solvedCount} solved</span>
+							</div>
+							<span class="chip" data-tone={category.tone ?? 'olive'}>
+								{String(category.order).padStart(2, '0')}
+							</span>
+						</div>
+						<p class="cp-year-card__summary">{category.description}</p>
+						<ul class="cp-year-card__list">
+							{category.records.length ? (
+								category.records.slice(0, 4).map((record) => <li>{record.title}</li>)
+							) : (
+								<li>No published solutions yet.</li>
+							)}
+						</ul>
+						<div class="cp-year-card__actions">
+							<a class="button" href={withBase(`/competitive-programming/cses/${category.slug}`)}>
+								Browse category
+							</a>
+						</div>
+					</article>
+				))
+			}
+		</div>
+	</section>
+
+	<section class="section-panel section-panel--signal">
+		<div class="section-heading">
+			<div>
+				<span class="section-label">Recent additions</span>
+				<h2>Latest CSES solution pages</h2>
+				<p>
+					These pages all keep the editorial TeX and the C++ source file visible, while the statement stays
+					as an external official link.
+				</p>
+			</div>
+		</div>
+		<div class="signal-grid">
+			{
+				latestEntries.map((record, index) => (
+					<a
+						class="signal-card"
+						data-tone="cool"
+						href={withBase(`/competitive-programming/cses/${record.categorySlug}/${record.slug}`)}
+					>
+						<span class="signal-card__index">0{index + 1}</span>
+						<div>
+							<span class="eyebrow">{record.categoryTitle}</span>
+							<h3>{record.title}</h3>
+							<p>{record.summary}</p>
+						</div>
+						<div class="signal-card__meta">
+							<span class="metric">{formatDate(record.updated)}</span>
+							<span class="metric">{record.level}</span>
+						</div>
+					</a>
+				))
+			}
+		</div>
+	</section>
+</BaseLayout>

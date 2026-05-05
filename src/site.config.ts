@@ -25,6 +25,6 @@ export const socialLinks = [
 
 export const focusAreas = [
 	'Project Euler write-ups with C++ and Python solutions',
-	'ICPC and IOI problems organized by contest and year',
+	'ICPC, IOI, and CSES archives organized for browsing and reuse',
 	'AI/ML, algebra, and post-quantum cryptography',
 ];

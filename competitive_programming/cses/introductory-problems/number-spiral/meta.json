@@ -1,0 +1,11 @@
+{
+  "title": "Number Spiral",
+  "category": "Introductory Problems",
+  "slug": "number-spiral",
+  "officialUrl": "https://cses.fi/problemset/task/1071",
+  "level": "basic",
+  "tags": ["math", "pattern"],
+  "status": "solved",
+  "order": 6,
+  "summary": "For each grid coordinate, compute the value stored there in the square spiral without simulating the whole grid."
+}

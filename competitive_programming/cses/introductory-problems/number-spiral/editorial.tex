@@ -1,0 +1,41 @@
+\section{Problem Summary}
+For each query \((y, x)\), determine which number appears at that cell in the square number spiral. The coordinates can be large, so filling the whole grid is not an option.
+
+\section{Editorial}
+The spiral is organized in square layers. For a cell \((y, x)\), the relevant layer is
+\[
+L = \max(y, x).
+\]
+
+That layer ends at either \(L^2\) or \((L - 1)^2 + 1\), depending on the parity of \(L\) and whether the cell lies on the bottom edge or the right edge.
+
+The clean way to reason about it is to split into two cases:
+\begin{itemize}
+\item if \(y > x\), the cell lies on the row where layer \(y\) finishes
+\item otherwise, the cell lies on the column where layer \(x\) finishes
+\end{itemize}
+
+Then parity tells us which direction that layer was traversed.
+
+If \(y > x\):
+\begin{itemize}
+\item when \(y\) is odd, the row grows left-to-right, so the answer is \((y - 1)^2 + x\)
+\item when \(y\) is even, the row grows right-to-left, so the answer is \(y^2 - x + 1\)
+\end{itemize}
+
+If \(x \ge y\):
+\begin{itemize}
+\item when \(x\) is even, the column grows top-to-bottom, so the answer is \((x - 1)^2 + y\)
+\item when \(x\) is odd, the column grows bottom-to-top, so the answer is \(x^2 - y + 1\)
+\end{itemize}
+
+That gives an \(O(1)\) formula per query.
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(1)\) per query
+\item Memory: \(O(1)\)
+\end{itemize}
+
+\section{Notes}
+The coordinates can be large enough that the computed values need 64-bit integers.

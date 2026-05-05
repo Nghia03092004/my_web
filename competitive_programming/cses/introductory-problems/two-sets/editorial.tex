@@ -1,0 +1,48 @@
+\section{Problem Summary}
+Use every number from \(1\) through \(n\) exactly once and split them into two sets with the same total sum. If this cannot be done, print that immediately.
+
+\section{Editorial}
+The total sum is
+\[
+\frac{n(n + 1)}{2}.
+\]
+If that sum is odd, then two equal halves are impossible.
+
+Assume the total sum is even and let the target be half of it. We can build one set greedily from large numbers down to small numbers:
+\begin{itemize}
+\item inspect \(n, n - 1, \ldots, 1\)
+\item whenever the current number does not exceed the remaining target, take it into the first set
+\item subtract it from the remaining target
+\end{itemize}
+
+This works because the numbers are consecutive. If a large number fits, taking it is always safe and makes the remaining target smaller; if it does not fit, we simply skip it and keep looking. By the time we reach \(1\), the remaining target must be \(0\).
+
+Everything that was not taken belongs to the second set.
+
+\section{Pseudocode}
+Compute the total sum of \(1\) through \(n\).
+
+If the total sum is odd:
+\begin{itemize}
+\item print \texttt{NO}
+\item stop
+\end{itemize}
+
+Set the remaining target to half of the total.
+
+For values from \(n\) down to \(1\):
+\begin{itemize}
+\item if the value is at most the remaining target, put it in the first set and subtract it from the target
+\item otherwise leave it for the second set
+\end{itemize}
+
+Print both sets.
+
+\section{Complexity Analysis}
+\begin{itemize}
+\item Time: \(O(n)\)
+\item Memory: \(O(n)\) to store the chosen partition
+\end{itemize}
+
+\section{Notes}
+Any valid partition is accepted, so the greedy descending construction is enough.

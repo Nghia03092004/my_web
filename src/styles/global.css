@@ -1264,6 +1264,13 @@ h4 {
 	margin-bottom: 1.45rem;
 }
 
+.post-header__links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin-top: 1rem;
+}
+
 .post-layout__back {
 	display: inline-flex;
 	align-items: center;
@@ -1710,6 +1717,11 @@ h4 {
 	min-height: 19rem;
 }
 
+.cses-highlight-card,
+.cses-problem-card {
+	min-height: 18rem;
+}
+
 .dsa-track-card {
 	min-height: 19rem;
 }
@@ -1743,7 +1755,20 @@ h4 {
 	gap: 1rem;
 }
 
+.cses-problem-card__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
 .cp-problem-card__header h3 {
+	margin: 0.25rem 0 0;
+	font-size: clamp(1.35rem, 2vw, 1.7rem);
+	line-height: 1.05;
+}
+
+.cses-problem-card__header h3 {
 	margin: 0.25rem 0 0;
 	font-size: clamp(1.35rem, 2vw, 1.7rem);
 	line-height: 1.05;
@@ -1765,6 +1790,17 @@ h4 {
 }
 
 .cp-problem-card__chips {
+	margin-top: auto;
+}
+
+.cses-card__chips {
+	margin-top: auto;
+}
+
+.cses-card__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
 	margin-top: auto;
 }
 
