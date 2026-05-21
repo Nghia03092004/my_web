@@ -2,57 +2,95 @@
 
 ## Problem Statement
 
-Let $\phi$ denote Euler's totient function. The **totient chain** of $n$ is:
+Let $\phi$ denote Euler's totient function. The **totient chain** of $n$ is
+$$
+n \to \phi(n) \to \phi(\phi(n)) \to \cdots \to 1.
+$$
 
-$$n \to \phi(n) \to \phi(\phi(n)) \to \cdots \to 1$$
-
-The **length** of the chain is the number of elements (including $n$ and $1$). For example, the chain of 12 is $12 \to 4 \to 2 \to 1$, length 4.
+The **length** of the chain is the number of elements, including both $n$ and $1$. For example, the chain of 12 is
+$$
+12 \to 4 \to 2 \to 1,
+$$
+which has length 4.
 
 Find the sum of all primes $p < 4 \times 10^7$ such that the totient chain of $p$ has length exactly 25.
 
-## Mathematical Foundation
+## Mathematical Development
 
 **Theorem 1 (Euler's product formula).** *For $n = p_1^{a_1} \cdots p_k^{a_k}$ with distinct primes $p_i$,*
+$$
+\phi(n) = n \prod_{i=1}^{k} \left(1 - \frac{1}{p_i}\right).
+$$
 
-$$\phi(n) = n \prod_{i=1}^{k} \left(1 - \frac{1}{p_i}\right)$$
+*Proof.* By inclusion-exclusion on $\{1, \ldots, n\}$, the count of integers coprime to $n$ is
+$$
+\phi(n) = n - \sum_{p_i \mid n} \frac{n}{p_i} + \sum_{p_i < p_j} \frac{n}{p_i p_j} - \cdots
+= n \prod_{i=1}^{k}\left(1 - \frac{1}{p_i}\right). \qquad \square
+$$
 
-**Proof.** By inclusion-exclusion on the set $\{1, \ldots, n\}$, the count of integers coprime to $n$ is:
+**Lemma 1 (Strict decrease).** *For all $n \geq 2$, $\phi(n) < n$.*
 
-$$\phi(n) = n - \sum_{p_i \mid n} \frac{n}{p_i} + \sum_{p_i < p_j} \frac{n}{p_i p_j} - \cdots = n \prod_{i=1}^{k}\left(1 - \frac{1}{p_i}\right)$$
+*Proof.* If $n \geq 2$, then $n$ has at least one prime factor $p$, so
+$$
+\phi(n) = n \prod_{q \mid n} \left(1 - \frac{1}{q}\right) \leq n\left(1 - \frac{1}{p}\right) < n.
+$$
+$\square$
 
-This follows from the Mobius inversion formula: $\phi(n) = \sum_{d \mid n} \mu(d) \cdot (n/d)$, and the multiplicativity of $\mu$. $\square$
+**Theorem 2 (Chain recurrence).** *If $\ell(n)$ denotes the totient-chain length, then $\ell(1) = 1$ and*
+$$
+\ell(n) = 1 + \ell(\phi(n))
+$$
+*for all $n \geq 2$.*
 
-**Lemma 1 (Strict decrease).** *For all $n \geq 2$, $\phi(n) < n$. Moreover, $\phi(n) \leq n/2$ when $n$ is even.*
+*Proof.* The chain of $n$ is $n$ followed by the chain of $\phi(n)$. Since $\phi(n) < n$ by Lemma 1, repeated iteration must eventually reach 1. $\square$
 
-**Proof.** For $n \geq 2$, $n$ has at least one prime factor $p$, so $\phi(n) = n \prod(1 - 1/p_i) \leq n(1 - 1/p) < n$. If $2 \mid n$, then $\phi(n) \leq n(1 - 1/2) = n/2$. $\square$
+**Lemma 2 (Totient sieve correctness).** *Initialize $\phi[n] = n$ for all $n$. For each prime $p$, updating every multiple $m$ by*
+$$
+\phi[m] \leftarrow \phi[m] \cdot \frac{p-1}{p}
+$$
+*produces the correct totient values for all $m$.*
 
-**Theorem 2 (Well-definedness and computability of chain length).** *The totient chain of every $n \geq 1$ terminates at 1. If $\ell(n)$ denotes the chain length, then $\ell(1) = 1$ and $\ell(n) = 1 + \ell(\phi(n))$ for $n \geq 2$. Moreover, $\ell(n)$ can be computed in order $n = 1, 2, 3, \ldots$ since $\phi(n) < n$.*
+*Proof.* Each prime divisor $p$ of $m$ contributes exactly one factor $(1 - 1/p)$ in Euler's product formula, and the sieve applies those factors once per prime divisor. $\square$
 
-**Proof.** Since $\phi(n) < n$ for $n \geq 2$ (Lemma 1), the sequence $n, \phi(n), \phi^2(n), \ldots$ is strictly decreasing until it reaches 1 (since $\phi(1) = 1$). This guarantees termination. The recurrence $\ell(n) = 1 + \ell(\phi(n))$ is valid because the chain of $n$ is $n$ followed by the chain of $\phi(n)$. Since $\phi(n) < n$, processing in increasing order ensures $\ell(\phi(n))$ is already computed when we compute $\ell(n)$. $\square$
+**Lemma 3 (Prime detection).** *For $n \geq 2$, we have $\phi(n) = n - 1$ if and only if $n$ is prime.*
 
-**Lemma 2 (Totient sieve correctness).** *Initialize $\phi[n] = n$ for all $n$. For each $n$ from 2 to $N-1$: if $\phi[n] = n$ (i.e., $n$ is prime), then for every multiple $m$ of $n$ with $m < N$, set $\phi[m] \leftarrow \phi[m] \cdot (n-1)/n$. After completion, $\phi[n]$ equals Euler's totient for all $1 \leq n < N$.*
-
-**Proof.** Each prime $p < N$ is identified when $\phi[p]$ still equals $p$ (no smaller prime has modified it, since $p$ is prime). The update $\phi[m] \leftarrow \phi[m] \cdot (p-1)/p$ applies the factor $(1 - 1/p)$ for each prime $p \mid m$. After all primes are processed, $\phi[n] = n \prod_{p \mid n}(1 - 1/p) = \phi(n)$ by Theorem 1. $\square$
-
-**Lemma 3 (Prime detection).** *After the totient sieve, $n$ is prime if and only if $\phi[n] = n - 1$.*
-
-**Proof.** If $n$ is prime, $\phi(n) = n - 1$. Conversely, if $n$ is composite with smallest prime factor $p \leq \sqrt{n}$, then $\phi(n) \leq n(1 - 1/p) \leq n(1 - 1/\sqrt{n}) < n - 1$ for $n \geq 4$. For $n = 1$, $\phi(1) = 1 \neq 0$. $\square$
+*Proof.* If $n$ is prime, then every positive integer below it is coprime to $n$, so $\phi(n) = n - 1$. Conversely, a composite $n$ has a nontrivial prime factor $p$, so at least the multiples of $p$ below $n$ are excluded, forcing $\phi(n) < n - 1$. $\square$
 
 ## Editorial
-We totient sieve. We then chain length computation. Finally, sum primes with chain length 25. We first generate the primes required by the search, then enumerate the admissible combinations and retain only the values that satisfy the final test.
+
+The recursion for the chain length is the important structural fact: once $\phi(n)$ is known, the chain length of $n$ is just one more than the chain length of a smaller number. That means a sieve order is perfect for this problem, because when we reach $n$, both $\phi(n)$ and $\ell(\phi(n))$ are already available.
+
+So we combine three tasks in one pass. First compute the totient values with the standard sieve. Then, in increasing order, use
+$$
+\ell(n) = 1 + \ell(\phi(n))
+$$
+to fill the chain-length array. Whenever $n$ is prime, identified by $\phi(n) = n-1$, check whether the chain length is 25 and add it if it is.
 
 ## Pseudocode
 
 ```text
-Totient sieve
-Chain length computation
-Sum primes with chain length 25
+Set LIMIT = 40,000,000.
+Initialize phi[n] = n for 0 <= n < LIMIT.
+Initialize chain[1] = 1 and chain[n] = 0 otherwise.
+answer = 0
+
+For n from 2 to LIMIT - 1:
+    If phi[n] = n:
+        For each multiple m of n:
+            phi[m] -= phi[m] / n
+
+    chain[n] = chain[phi[n]] + 1
+
+    If phi[n] = n - 1 and chain[n] = 25:
+        answer += n
+
+Return answer
 ```
 
 ## Complexity Analysis
 
-- **Time:** Totient sieve: $O(N \log \log N)$ (each composite is visited once per prime factor, and $\sum_{p \leq N} N/p = O(N \log \log N)$ by Mertens' theorem). Chain computation: $O(N)$. Prime summation: $O(N)$. Total: $O(N \log \log N)$ where $N = 4 \times 10^7$.
-- **Space:** $O(N)$ for the $\phi$ and chain arrays.
+- **Time:** $O(N \log \log N)$ for the totient sieve, plus $O(N)$ for the chain updates and prime filtering.
+- **Space:** $O(N)$ for the totient table and the chain-length table.
 
 ## Answer
 

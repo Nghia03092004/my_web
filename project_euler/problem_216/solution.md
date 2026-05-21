@@ -2,53 +2,117 @@
 
 ## Problem Statement
 
-Consider the sequence $t(n) = 2n^2 - 1$ for $n \geq 1$:
-
-$$1, 7, 17, 31, 49, 71, 97, 127, 161, 199, \ldots$$
+Consider the sequence
+$$
+t(n) = 2n^2 - 1
+$$
+for $n \geq 1$:
+$$
+1, 7, 17, 31, 49, 71, 97, 127, 161, 199, \ldots
+$$
 
 How many values of $t(n)$ are prime for $2 \leq n \leq 50{,}000{,}000$?
 
-## Mathematical Foundation
+## Mathematical Development
 
-**Theorem 1 (Quadratic residue condition).** *If $p$ is an odd prime dividing $t(n) = 2n^2 - 1$, then $p \equiv \pm 1 \pmod{8}$.*
+**Theorem 1 (Quadratic residue condition).** *If an odd prime $p$ divides $t(n) = 2n^2 - 1$, then*
+$$
+p \equiv \pm 1 \pmod{8}.
+$$
 
-**Proof.** From $p \mid 2n^2 - 1$ we get $2n^2 \equiv 1 \pmod{p}$, so $n^2 \equiv 2^{-1} \pmod{p}$. Since $n^2 \equiv 2^{-1}$ has a solution, $2^{-1}$ is a quadratic residue mod $p$. Since $\left(\frac{a^{-1}}{p}\right) = \left(\frac{a}{p}\right)$ for $\gcd(a, p) = 1$, we need $\left(\frac{2}{p}\right) = 1$. By the second supplement to the law of quadratic reciprocity:
+*Proof.* From $p \mid 2n^2 - 1$ we get
+$$
+2n^2 \equiv 1 \pmod{p},
+$$
+so $2^{-1}$ is a quadratic residue modulo $p$. Equivalently,
+$$
+\left(\frac{2}{p}\right) = 1.
+$$
+By the second supplement to quadratic reciprocity,
+$$
+\left(\frac{2}{p}\right) = (-1)^{(p^2 - 1)/8},
+$$
+which equals 1 exactly for $p \equiv \pm 1 \pmod{8}$. $\square$
 
-$$\left(\frac{2}{p}\right) = (-1)^{(p^2-1)/8}$$
+**Theorem 2 (Root periodicity).** *If $p \mid t(n_0)$, then*
+$$
+p \mid t(n_0 + kp)
+$$
+*for every integer $k$. Moreover, when the congruence*
+$$
+2x^2 \equiv 1 \pmod{p}
+$$
+*has a solution, its two roots are $r$ and $p-r$.*
 
-This equals $1$ if and only if $p \equiv \pm 1 \pmod{8}$. $\square$
+*Proof.* Expanding gives
+$$
+t(n_0 + kp) = 2(n_0 + kp)^2 - 1 \equiv 2n_0^2 - 1 \equiv 0 \pmod{p}.
+$$
+If $r^2 \equiv 2^{-1} \pmod{p}$, then $(p-r)^2 \equiv r^2 \pmod{p}$ as well. Since a quadratic congruence over $\mathbb{F}_p$ has at most two roots, these are the only solutions. $\square$
 
-**Theorem 2 (Root periodicity).** *If $p \mid t(n_0)$, then $p \mid t(n_0 + kp)$ for all integers $k$. Moreover, $n_0$ and $p - n_0$ are the two distinct roots of $2x^2 \equiv 1 \pmod{p}$ (assuming they exist).*
+**Lemma 1 (Tonelli-Shanks).** *For an odd prime $p$ and a quadratic residue $a \pmod p$, the Tonelli-Shanks algorithm finds a square root of $a$ modulo $p$ in polylogarithmic time.*
 
-**Proof.** We have $t(n_0 + kp) = 2(n_0 + kp)^2 - 1 = 2n_0^2 + 4n_0 kp + 2k^2 p^2 - 1 \equiv 2n_0^2 - 1 \equiv 0 \pmod{p}$. For the roots: if $n_0^2 \equiv 2^{-1} \pmod{p}$, then $(p - n_0)^2 = p^2 - 2pn_0 + n_0^2 \equiv n_0^2 \equiv 2^{-1} \pmod{p}$. Since $x^2 \equiv c \pmod{p}$ has at most 2 solutions (the polynomial $x^2 - c$ has degree 2 over $\mathbb{F}_p$), $n_0$ and $p - n_0$ are all the roots. $\square$
+**Theorem 3 (Boolean residue-class sieve).** *Maintain an array `is_composite[n]`, initially false for $2 \leq n \leq N$. For each prime*
+$$
+p \leq \sqrt{2N^2}
+$$
+*with $p \equiv \pm 1 \pmod{8}$: solve*
+$$
+2x^2 \equiv 1 \pmod{p},
+$$
+*obtaining roots $r$ and $p-r$, and mark every $n \equiv r \pmod p$ or $n \equiv -r \pmod p$ as composite, except for the unique case $t(n) = p$. After all such primes are processed, `is_composite[n]` is false exactly when $t(n)$ is prime.*
 
-**Lemma 1 (Tonelli-Shanks algorithm).** *Given $a$ with $\left(\frac{a}{p}\right) = 1$, the Tonelli-Shanks algorithm computes $r$ with $r^2 \equiv a \pmod{p}$ in $O(\log^2 p)$ time.*
+*Proof.* If $n$ is marked for some prime $p$, then $p \mid t(n)$. The skipped exceptional case is precisely $t(n)=p$, which is prime; every other marked value is composite.
 
-**Proof.** Write $p - 1 = 2^s q$ with $q$ odd. The algorithm maintains invariants $t \equiv a^q \cdot c^{2^{s-M}} \pmod{p}$ (converging to 1) and $R^2 \equiv a \cdot t^{-1} \pmod{p}$, where $c$ is derived from a quadratic non-residue. At each iteration, $M$ decreases by at least 1, so the algorithm terminates in at most $s \leq \log_2 p$ iterations. Each iteration uses $O(\log p)$ modular multiplications. $\square$
-
-**Theorem 3 (Sieve correctness).** *Maintain an array $T[n] = t(n)$ for $2 \leq n \leq N$. For each prime $p \leq \sqrt{2N^2}$ with $p \equiv \pm 1 \pmod{8}$: find the roots $n_0, p - n_0$ of $2x^2 \equiv 1 \pmod{p}$, and for each root $r \in \{n_0, p - n_0\}$, divide $T[n]$ by $p$ (repeatedly) for all $n \equiv r \pmod{p}$ in range. After the sieve, $t(n)$ is prime if and only if $T[n] > 1$.*
-
-**Proof.** The sieve removes all prime factors $\leq \sqrt{2N^2}$ from $T[n]$. If $t(n)$ is composite, it has a prime factor $\leq \sqrt{t(n)} \leq \sqrt{2N^2}$, which the sieve removes, leaving $T[n] < t(n)$. If $t(n)$ is prime, no factor is found, so $T[n] = t(n) > 1$. The remaining case $T[n] = 1$ means $t(n)$ was fully factored by small primes, hence composite. $\square$
+Conversely, if $t(n)$ is composite, it has some prime divisor
+$$
+q \leq \sqrt{t(n)} \leq \sqrt{2N^2}.
+$$
+By Theorem 1, $q \equiv \pm 1 \pmod{8}$, so the congruence $2x^2 \equiv 1 \pmod q$ has the relevant roots, and by Theorem 2 the value of $n$ lies in one of the marked residue classes modulo $q$. Therefore every composite $t(n)$ is marked. $\square$
 
 ## Editorial
-Count how many t(n) = 2n^2 - 1 are prime for 2 <= n <= 50,000,000. Approach: Sieve - for each prime p (where 2 is a QR mod p), find roots of 2x^2 = 1 (mod p) and mark those n-values as having composite t(n). We initialize t(n) values. We then sieve primes up to sqrt(2*N^2) using standard sieve. Finally, iterate over each prime p in primes.
+
+The sieve works on the parameter $n$, not on the values $2n^2-1$ themselves. For a prime $p$ to divide $2n^2-1$, the congruence
+$$
+2n^2 \equiv 1 \pmod p
+$$
+must be solvable, so only primes with $p \equiv \pm 1 \pmod 8$ matter. Once such a prime is fixed, its solutions form two residue classes modulo $p$, and every $n$ in those classes produces a composite value unless $2n^2-1$ happens to equal $p$ itself.
+
+That turns the problem into a quadratic-residue sieve. Generate the relevant primes, use Tonelli-Shanks to find the two roots of the congruence, mark the corresponding arithmetic progressions in $n$, and count the values left unmarked.
 
 ## Pseudocode
 
 ```text
-Initialize t(n) values
-Sieve primes up to sqrt(2*N^2) using standard sieve
-for each prime p in primes
-Find r such that 2*r^2 ≡ 1 (mod p)
-Sieve with root r
-Sieve with root p - r
-Count primes
+Set LIMIT = 50,000,000.
+Sieve all primes up to floor(sqrt(2 * LIMIT^2)).
+Create a boolean array is_composite[0..LIMIT], initially false.
+
+For each odd prime p from the sieve:
+    If p is not congruent to 1 or 7 modulo 8:
+        continue
+
+    Solve 2 * r^2 ≡ 1 (mod p) using Tonelli-Shanks.
+    Let the two roots be r and p - r.
+
+    Check whether 2 * n^2 - 1 = p has an integer solution n.
+    If it does, remember that exceptional n so it is not marked.
+
+    For each root root in {r, p - r}:
+        Mark every n ≡ root (mod p) with 2 <= n <= LIMIT
+        as composite, except the exceptional n if it exists.
+
+Count the integers n from 2 to LIMIT with is_composite[n] = false.
+Return that count.
 ```
 
 ## Complexity Analysis
 
-- **Time:** $O(N \log \log N)$ for the sieve over polynomial values (analogous to the Sieve of Eratosthenes). The Tonelli-Shanks computation per prime is $O(\log^2 p)$, negligible in total.
-- **Space:** $O(N)$ for the array $T$, plus $O(\sqrt{N})$ for the prime sieve.
+- **Time:** The prime sieve costs $O(M \log \log M)$ with $M = \lfloor \sqrt{2}N \rfloor$. The marking phase costs
+  $$
+  O\!\left(\sum_{p \equiv \pm 1 \bmod 8} \frac{N}{p}\right)
+  = O(N \log \log N).
+  $$
+- **Space:** $O(M)$ for the prime sieve and $O(N)$ for the composite-marker array.
 
 ## Answer
 

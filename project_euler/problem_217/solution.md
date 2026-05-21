@@ -2,71 +2,137 @@
 
 ## Problem Statement
 
-A positive integer with $k$ digits (base 10) is **balanced** if the sum of the first $\lfloor k/2 \rfloor$ digits equals the sum of the last $\lfloor k/2 \rfloor$ digits. For odd $k$, the middle digit is ignored.
+A positive integer with $k$ digits is **balanced** if the sum of the first $\lfloor k/2 \rfloor$ digits equals the sum of the last $\lfloor k/2 \rfloor$ digits. For odd $k$, the middle digit is ignored.
 
-All 1-digit numbers are trivially balanced (both halves are empty, summing to 0).
+All 1-digit numbers are trivially balanced.
 
-Find the sum of all balanced numbers less than $10^{47}$, modulo $3^{15} = 14348907$.
+Find the sum of all balanced numbers less than $10^{47}$, modulo
+$$
+3^{15} = 14348907.
+$$
 
-## Mathematical Foundation
+## Mathematical Development
 
-**Definition.** For a $k$-digit number, let $h = \lfloor k/2 \rfloor$. Write the number as:
-- Even $k = 2h$: $N = L \cdot 10^h + R$, where $L$ is an $h$-digit number ($10^{h-1} \leq L < 10^h$) and $0 \leq R < 10^h$.
-- Odd $k = 2h+1$: $N = L \cdot 10^{h+1} + m \cdot 10^h + R$, where $L$ is $h$ digits, $m \in \{0, \ldots, 9\}$, $0 \leq R < 10^h$.
+**Definition.** For a $k$-digit number, let $h = \lfloor k/2 \rfloor$.
+
+- If $k = 2h$, write
+  $$
+  N = L \cdot 10^h + R,
+  $$
+  where $L$ is an $h$-digit number and $0 \leq R < 10^h$.
+- If $k = 2h+1$, write
+  $$
+  N = L \cdot 10^{h+1} + m \cdot 10^h + R,
+  $$
+  where $L$ is an $h$-digit number, $m \in \{0,\ldots,9\}$, and $0 \leq R < 10^h$.
 
 Balanced means $\operatorname{digitsum}(L) = \operatorname{digitsum}(R)$.
 
-**Theorem 1 (Decomposition of balanced number sum).** *Define for $h$-digit strings (with possible leading zeros):*
-- *$C(h, s) = |\{x : 0 \leq x < 10^h,\; \operatorname{digitsum}(x) = s\}|$*
-- *$\Sigma(h, s) = \sum_{\substack{0 \leq x < 10^h \\ \operatorname{digitsum}(x) = s}} x$*
+**Theorem 1 (Decomposition of the balanced-number sum).** *For $h$-digit strings allowing leading zeros, define*
 
-*For the left half (no leading zeros): $C_L(h, s) = C(h, s) - C(h-1, s)$ and $\Sigma_L(h, s) = \Sigma(h, s) - \Sigma(h-1, s)$ (subtracting strings with leading zero).*
+- *$C(h, s)$ = number of strings with digit sum $s$*
+- *$\Sigma(h, s)$ = sum of the numeric values of those strings*
 
-*Then for even $k = 2h$:*
+*For genuine left halves with no leading zero, define*
+$$
+C_L(h, s) = C(h, s) - C(h-1, s),
+\qquad
+\Sigma_L(h, s) = \Sigma(h, s) - \Sigma(h-1, s).
+$$
 
-$$\text{Sum}_{2h} = \sum_{s=0}^{9h} \bigl[\Sigma_L(h,s) \cdot 10^h \cdot C(h,s) + C_L(h,s) \cdot \Sigma(h,s)\bigr]$$
+*Then for even length $2h$,*
+$$
+\text{Sum}_{2h}
+= \sum_{s=0}^{9h}
+\Bigl[
+\Sigma_L(h,s)\,10^h\,C(h,s)
++
+C_L(h,s)\,\Sigma(h,s)
+\Bigr].
+$$
 
-*For odd $k = 2h+1$:*
+*For odd length $2h+1$,*
+$$
+\text{Sum}_{2h+1}
+= \sum_{s=0}^{9h}
+\Bigl[
+10\,\Sigma_L(h,s)\,10^{h+1}\,C(h,s)
++
+45\,10^h\,C_L(h,s)\,C(h,s)
++
+10\,C_L(h,s)\,\Sigma(h,s)
+\Bigr].
+$$
 
-$$\text{Sum}_{2h+1} = \sum_{s=0}^{9h} \bigl[10 \cdot \Sigma_L(h,s) \cdot 10^{h+1} \cdot C(h,s) + 45 \cdot 10^h \cdot C_L(h,s) \cdot C(h,s) + 10 \cdot C_L(h,s) \cdot \Sigma(h,s)\bigr]$$
+*Proof.* For even length, each balanced number is formed by pairing a valid left half and a right half with the same digit sum. Summing the contribution of the left block and the right block separately gives the stated formula.
 
-**Proof.** For even $k = 2h$: a balanced number $N = L \cdot 10^h + R$ with $\operatorname{digitsum}(L) = \operatorname{digitsum}(R) = s$. Summing over all such $N$:
+For odd length, there are 10 choices for the middle digit. The left and right contributions are therefore multiplied by 10, while the middle position contributes
+$$
+0 + 1 + \cdots + 9 = 45
+$$
+times the corresponding place value. $\square$
 
-$$\sum_N N = \sum_N (L \cdot 10^h + R) = 10^h \sum_L L \cdot |\{R : \operatorname{digitsum}(R) = s\}| + \sum_R R \cdot |\{L : \operatorname{digitsum}(L) = s, L \geq 10^{h-1}\}|$$
+**Lemma 1 (DP for digit-sum statistics).** *The tables $C(h,s)$ and $\Sigma(h,s)$ satisfy*
+$$
+C(h, s) = \sum_{d=0}^{9} C(h-1, s-d),
+$$
+$$
+\Sigma(h, s) = \sum_{d=0}^{9} \bigl[10\Sigma(h-1, s-d) + d\,C(h-1, s-d)\bigr],
+$$
+*with base values $C(0,0)=1$ and $\Sigma(0,0)=0$.*
 
-$$= 10^h \cdot \Sigma_L(h,s) \cdot C(h,s) + C_L(h,s) \cdot \Sigma(h,s)$$
-
-Summing over $s$ gives the formula. For odd $k = 2h+1$: $N = L \cdot 10^{h+1} + m \cdot 10^h + R$, summing over $m = 0, \ldots, 9$ (giving a factor of 10 for $L$ and $R$ terms, and $\sum m = 45$ for the middle digit term). $\square$
-
-**Lemma 1 (DP for digit-sum statistics).** *The functions $C(h, s)$ and $\Sigma(h, s)$ satisfy the recurrences:*
-
-$$C(h, s) = \sum_{d=0}^{9} C(h-1, s-d)$$
-
-$$\Sigma(h, s) = \sum_{d=0}^{9} \bigl[10 \cdot \Sigma(h-1, s-d) + d \cdot C(h-1, s-d)\bigr]$$
-
-*with base cases $C(0, 0) = 1$, $C(0, s) = 0$ for $s \neq 0$, $\Sigma(0, 0) = 0$.*
-
-**Proof.** The last digit $d$ of an $h$-digit string contributes $d$ to the digit sum and $d$ to the numeric value. Removing the last digit gives an $(h-1)$-digit string with digit sum $s - d$ and value $v$. The original string has value $10v + d$. Summing: $\Sigma(h, s) = \sum_d \sum_v (10v + d) = \sum_d [10 \cdot \Sigma(h-1, s-d) + d \cdot C(h-1, s-d)]$. The count recurrence is analogous. $\square$
+*Proof.* Append a final digit $d$ to a shorter string of digit sum $s-d$. The count recurrence is immediate, and the value recurrence follows from the decimal-value update
+$$
+v \mapsto 10v + d.
+$$
+$\square$
 
 ## Editorial
-Sum of all balanced numbers below 10^47, mod 3^15 = 14348907. A k-digit number is balanced if the digit sum of the first floor(k/2) digits equals the digit sum of the last floor(k/2) digits. For odd k, the middle digit is ignored. We compute C(h, s) and Sigma(h, s) via DP. We then also compute C(h-1, s) and Sigma(h-1, s). Finally, we build the tables C[0..h][0..max_s] and Sigma[0..h][0..max_s].
+
+The balance condition couples the two halves only through their digit sum. That means the useful state is not the half-string itself, but just two aggregated quantities for each pair `(length, digit sum)`: how many half-strings realize that sum, and what the total of their numeric values is.
+
+Once those tables are built, assembling balanced numbers is straightforward. For each possible total length and each feasible digit sum, pair a left half with a right half of the same sum. Even and odd lengths differ only in how the middle digit is handled, so the whole problem reduces to one reusable DP table plus a clean final accumulation.
 
 ## Pseudocode
 
 ```text
-1-digit balanced numbers: 1+2+...+9 = 45
-Compute C(h, s) and Sigma(h, s) via DP
-Also compute C(h-1, s) and Sigma(h-1, s)
-DP: build tables C[0..h][0..max_s], Sigma[0..h][0..max_s]
-Compute left-half tables (no leading zeros)
-Accumulate sum for this digit length
-if k is even
+Set MOD = 3^15 and MAX_HALF = 23.
+Create tables count[h][s] and total_value[h][s].
+
+Initialize count[0][0] = 1 and total_value[0][0] = 0.
+Precompute powers of 10 modulo MOD.
+
+For half-length h from 0 to MAX_HALF - 1:
+    For each reachable digit sum s:
+        For digit d from 0 to 9:
+            count[h + 1][s + d] += count[h][s]
+            total_value[h + 1][s + d] += total_value[h][s] + d * 10^h * count[h][s]
+            Reduce everything modulo MOD.
+
+answer = sum of the 1-digit numbers = 45.
+
+For full length k from 2 to 47:
+    h = floor(k / 2)
+    For each digit sum s:
+        left_count  = count[h][s] - count[h - 1][s]
+        left_total  = total_value[h][s] - total_value[h - 1][s]
+        right_count = count[h][s]
+        right_total = total_value[h][s]
+
+        If k is even:
+            add the contribution of left halves shifted by 10^h
+            plus the contribution of right halves.
+        Otherwise:
+            also include the 10 choices for the middle digit
+            and their total contribution 45 * 10^h.
+
+Return answer modulo MOD.
 ```
 
 ## Complexity Analysis
 
-- **Time:** For each digit length $k$ (up to 47), the DP builds tables of size $h \times 9h$ where $h \leq 23$. Each entry requires $O(10)$ work. Total: $O\bigl(\sum_{k=2}^{47} h \cdot 9h \cdot 10\bigr) = O(47 \cdot 23^2 \cdot 90) \approx O(2.2 \times 10^6)$.
-- **Space:** $O(h \cdot 9h) = O(h^2)$ per digit length, reusable. Maximum $O(23^2) \approx O(500)$.
+- **Time:** Building the half-string tables costs $O(H S \cdot 10)$ with $H = 23$ and $S = 9H = 207$. The final accumulation over all lengths costs $O(47S)$.
+- **Space:** $O(HS)$ for the count and value tables.
 
 ## Answer
 

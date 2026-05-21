@@ -1,26 +1,26 @@
+from array import array
+
+
 def solve():
-    N = 40_000_000
+    limit = 40_000_000
 
-    # Sieve for Euler's totient
-    phi = list(range(N))
-    for i in range(2, N):
-        if phi[i] == i:  # i is prime
-            for j in range(i, N, i):
-                phi[j] = phi[j] // i * (i - 1)
-
-    # Compute chain lengths
-    chain = [0] * N
+    phi = array("I", range(limit))
+    chain = bytearray(limit)
     chain[1] = 1
-    for i in range(2, N):
-        chain[i] = 1 + chain[phi[i]]
 
-    # Sum primes with chain length 25
     answer = 0
-    for i in range(2, N):
-        if phi[i] == i - 1 and chain[i] == 25:
-            answer += i
+
+    for n in range(2, limit):
+        if phi[n] == n:
+            for multiple in range(n, limit, n):
+                phi[multiple] -= phi[multiple] // n
+
+        chain[n] = chain[phi[n]] + 1
+        if phi[n] == n - 1 and chain[n] == 25:
+            answer += n
 
     print(answer)
+
 
 if __name__ == "__main__":
     solve()

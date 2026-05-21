@@ -62,8 +62,8 @@ long long modpow(long long base, long long exp, long long mod) {
     long long result = 1;
     base %= mod;
     while (exp > 0) {
-        if (exp & 1) result = (__int128)result * base % mod;
-        base = (__int128)base * base % mod;
+        if (exp & 1) result = result * base % mod;
+        base = base * base % mod;
         exp >>= 1;
     }
     return result;
@@ -97,14 +97,14 @@ long long sqrt_mod(long long a, long long p) {
     while (true) {
         if (t == 1) return R;
         long long i = 1;
-        long long tmp = (__int128)t * t % p;
-        while (tmp != 1) { tmp = (__int128)tmp * tmp % p; i++; }
+        long long tmp = t * t % p;
+        while (tmp != 1) { tmp = tmp * tmp % p; i++; }
         long long b = c;
-        for (long long j = 0; j < M - i - 1; j++) b = (__int128)b * b % p;
+        for (long long j = 0; j < M - i - 1; j++) b = b * b % p;
         M = i;
-        c = (__int128)b * b % p;
-        t = (__int128)t * c % p;
-        R = (__int128)R * b % p;
+        c = b * b % p;
+        t = t * c % p;
+        R = R * b % p;
     }
 }
 
