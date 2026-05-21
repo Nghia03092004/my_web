@@ -10,6 +10,7 @@ formed by the permutation sigma on {0,1}^6.
 The answer is the product of Lucas numbers over all cycle lengths.
 """
 
+
 def solve():
     def sigma(x):
         a = (x >> 5) & 1
@@ -21,26 +22,20 @@ def solve():
         new_f = a ^ (b & c)
         return (b << 5) | (c << 4) | (d << 3) | (e << 2) | (f << 1) | new_f
 
-    # Find cycles
     visited = [False] * 64
     cycle_lengths = []
 
-    for i in range(64):
-        if visited[i]:
+    for start in range(64):
+        if visited[start]:
             continue
         length = 0
-        cur = i
+        cur = start
         while not visited[cur]:
             visited[cur] = True
             cur = sigma(cur)
             length += 1
         cycle_lengths.append(length)
 
-    print(f"Cycle structure: {sorted(cycle_lengths)}")
-    print(f"Number of cycles: {len(cycle_lengths)}")
-    print(f"Sum of cycle lengths: {sum(cycle_lengths)}")
-
-    # Lucas numbers: L(1)=1, L(2)=3, L(n)=L(n-1)+L(n-2)
     def lucas(n):
         if n == 1:
             return 1
@@ -56,6 +51,7 @@ def solve():
         answer *= lucas(length)
 
     return answer
+
 
 answer = solve()
 assert answer == 15964587728784

@@ -4,31 +4,48 @@ Problem 201: Subsets with a Unique Sum
 For S = {1^2, 2^2, ..., 100^2}, find the sum of all integers that are the
 sum of exactly one subset of S of size 50.
 
-We use a 3-state DP: 0 = unreachable, 1 = exactly one subset, 2 = two or more.
+For each subset size we maintain two bitsets:
+- once[j]: sums achievable in exactly one way
+- many[j]: sums achievable in at least two ways
 """
 
+
 def solve():
-    N = 100
-    K = 50
-    elements = [(i+1)**2 for i in range(N)]
+    n = 100
+    k = 50
+    elements = [i * i for i in range(1, n + 1)]
 
-    max_sum = sum(elements[K:])  # sum of 51^2..100^2 = 295425
+    prefix = [0]
+    for value in elements:
+        prefix.append(prefix[-1] + value)
 
-    # dp[j][s] in {0, 1, 2}
-    # Use a list of bytearray for efficiency
-    dp = [bytearray(max_sum + 1) for _ in range(K + 1)]
-    dp[0][0] = 1
+    min_sum = prefix[k]
+    max_sum = prefix[n] - prefix[n - k]
+    mask = (1 << (max_sum + 1)) - 1
 
-    for i, ai in enumerate(elements):
-        # Iterate j in reverse
-        for j in range(min(i + 1, K), 0, -1):
-            for s in range(max_sum, ai - 1, -1):
-                if dp[j-1][s - ai]:
-                    val = dp[j][s] + dp[j-1][s - ai]
-                    dp[j][s] = min(val, 2)
+    once = [0] * (k + 1)
+    many = [0] * (k + 1)
+    once[0] = 1  # Only sum 0 is achievable with 0 elements.
 
-    ans = sum(s for s in range(max_sum + 1) if dp[K][s] == 1)
-    print(ans)
+    for value in elements:
+        for size in range(k, 0, -1):
+            generated_once = (once[size - 1] << value) & mask
+            generated_many = (many[size - 1] << value) & mask
+
+            new_many = many[size] | generated_many | (once[size] & generated_once)
+            new_once = (once[size] ^ generated_once) & ~new_many
+
+            many[size] = new_many
+            once[size] = new_once & mask
+
+    answer = 0
+    bits = once[k]
+    for total in range(min_sum, max_sum + 1):
+        if (bits >> total) & 1:
+            answer += total
+
+    print(answer)
+
 
 if __name__ == "__main__":
     solve()

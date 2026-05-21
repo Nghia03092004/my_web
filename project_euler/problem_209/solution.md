@@ -2,52 +2,97 @@
 
 ## Problem Statement
 
-A 6-input binary truth table $\tau(a,b,c,d,e,f)$ must satisfy:
-$$\tau(a,b,c,d,e,f) \wedge \tau(b,c,d,e,f, a \oplus (b \wedge c)) = 0$$
+A 6-input binary truth table $\tau(a,b,c,d,e,f)$ must satisfy
+$$
+\tau(a,b,c,d,e,f) \wedge \tau(b,c,d,e,f, a \oplus (b \wedge c)) = 0
+$$
 for all inputs $(a,b,c,d,e,f) \in \{0,1\}^6$.
 
 How many such truth tables exist?
 
-## Analysis
+## Mathematical Development
 
-### Constraint as a Graph
+### The Permutation
 
-The condition says: for each input $x = (a,b,c,d,e,f)$, at most one of $\tau(x)$ and $\tau(\sigma(x))$ can be 1, where:
-$$\sigma(a,b,c,d,e,f) = (b,c,d,e,f, a \oplus (b \wedge c))$$
+Define
+$$
+\sigma(a,b,c,d,e,f) = (b,c,d,e,f, a \oplus (b \wedge c)).
+$$
 
-This defines a permutation $\sigma$ on the 64 inputs $\{0,1\}^6$. The constraint is that for each input $x$, we cannot have both $\tau(x) = 1$ and $\tau(\sigma(x)) = 1$.
+This is a bijection on $\{0,1\}^6$, because from the image $(b,c,d,e,f,g)$ we can recover
+$$
+a = g \oplus (b \wedge c).
+$$
 
-### Cycle Decomposition
+### Constraint as a Cycle Problem
 
-Since $\sigma$ is a function from a finite set to itself, it decomposes into cycles and tails. In fact, $\sigma$ is a bijection (it's invertible: given $(b,c,d,e,f,g)$, we can recover $a = g \oplus (b \wedge c)$), so it's a permutation and decomposes into disjoint cycles.
+The condition
+$$
+\tau(x) \wedge \tau(\sigma(x)) = 0
+$$
+means that two consecutive states along an orbit of $\sigma$ cannot both be assigned the value 1. Since $\sigma$ is a permutation, the 64 states decompose into disjoint cycles, and the constraint can be solved independently on each cycle.
 
-### Independent Set Counting on Cycles
+### Independent Sets on a Cycle
 
-The constraint says: on each cycle of $\sigma$, we cannot assign $\tau = 1$ to two consecutive elements. This is the problem of counting independent sets on a cycle graph.
+For a cycle of length $n$, the valid assignments are exactly the independent sets of the cycle graph $C_n$. Their number is the Lucas number
+$$
+L_n = F_{n-1} + F_{n+1},
+$$
+where $F_n$ is the Fibonacci sequence.
 
-For a cycle of length $n$, the number of independent sets (including the empty set) is:
-$$L_n = F_{n-1} + F_{n+1}$$
-where $F_k$ is the $k$-th Fibonacci number (Lucas numbers).
+For the fixed-point case $n = 1$, the condition becomes $\tau(x) \wedge \tau(x) = 0$, so only the assignment $\tau(x) = 0$ is allowed; this matches the convention $L_1 = 1$.
 
-Equivalently, $L_n = \text{Lucas}(n)$.
+### Cycle Structure
 
-### Computing the Cycle Structure
+A direct computation of the permutation on all 64 bit patterns yields the cycle lengths
+$$
+1,\ 2,\ 3,\ 6,\ 6,\ 46.
+$$
 
-We enumerate all 64 inputs, apply $\sigma$ repeatedly, and find the cycle lengths. The total count is the product of Lucas numbers over all cycles.
+Therefore the total number of valid truth tables is
+$$
+L_1 \cdot L_2 \cdot L_3 \cdot L_6^2 \cdot L_{46}.
+$$
 
-### Cycle Lengths
+## Editorial
 
-Computing $\sigma$ for all 64 inputs and finding cycles:
-- The permutation $\sigma$ on $\{0,1\}^6$ has the following cycle structure (computed programmatically):
-  - Cycles of various lengths
+The Boolean condition becomes much easier once the input tuples are viewed as nodes of a directed permutation graph. Every tuple points to exactly one successor under $\sigma$, and because $\sigma$ is invertible, those successor chains are actually cycles.
 
-The product of Lucas numbers for each cycle gives the answer.
+On a single cycle, the rule simply says that no two adjacent positions may both receive the value 1. That is the independent-set count for a cycle graph, which is a Lucas number. So the whole problem reduces to finding the cycle decomposition of a 64-state permutation and multiplying the appropriate Lucas counts.
 
-## Correctness
+## Pseudocode
 
-**Theorem.** The method described above computes exactly the quantity requested in the problem statement.
+```text
+Define sigma(x) by decoding the 6 bits of x,
+shifting them left, and appending a xor (b and c).
 
-*Proof.* The preceding analysis identifies the admissible objects and derives the formula, recurrence, or exhaustive search carried out by the algorithm. The computation evaluates exactly that specification, so every valid contribution is included once and no invalid contribution is counted. Therefore the returned value is the required answer. $\square$
+Mark all 64 states as unvisited.
+cycle_lengths = empty list
+
+For x from 0 to 63:
+    If x is already visited:
+        continue
+
+    Follow sigma starting from x until the cycle closes,
+    marking states visited and counting the length.
+    Append that length to cycle_lengths.
+
+Define Lucas(n):
+    If n = 1, return 1
+    If n = 2, return 3
+    Build upward with the recurrence L_n = L_{n-1} + L_{n-2}
+
+answer = 1
+For each length in cycle_lengths:
+    answer *= Lucas(length)
+
+Return answer
+```
+
+## Complexity Analysis
+
+- **Time:** $O(64)$ to find the cycle decomposition, plus $O(\max \text{ cycle length})$ to build the Lucas numbers.
+- **Space:** $O(64)$.
 
 ## Answer
 

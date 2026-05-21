@@ -2,86 +2,133 @@
 
 ## Problem Statement
 
-Consider the set $S(r)$ of points $(x, y)$ with integer coordinates satisfying $|x| + |y| \leq r$. Let $O = (0, 0)$ and $C = (r/4, r/4)$. Let $N(r)$ be the number of points $B$ in $S(r)$ such that triangle $OBC$ has an obtuse angle (the largest angle $\alpha$ satisfies $90° < \alpha < 180°$).
+Consider the set $S(r)$ of points $(x, y)$ with integer coordinates satisfying $|x| + |y| \leq r$. Let $O = (0, 0)$ and $C = (r/4, r/4)$. Let $N(r)$ be the number of points $B$ in $S(r)$ such that triangle $OBC$ has an obtuse angle, so its largest angle satisfies $90^\circ < \alpha < 180^\circ$.
 
-Given: $N(4) = 24$, $N(8) = 100$. Find $N(10^9)$.
+Given that $N(4) = 24$ and $N(8) = 100$, find $N(10^9)$.
 
-## Analysis
+## Mathematical Development
 
 ### Classifying Obtuse Angles
 
-With $O = (0, 0)$ and $C = (r/4, r/4)$, we determine which vertex has the obtuse angle using dot products.
+With $O = (0, 0)$ and $C = (r/4, r/4)$, we determine which vertex is obtuse by dot products.
 
-**Obtuse at $O$:** $\vec{OB} \cdot \vec{OC} < 0$
-$$x \cdot \frac{r}{4} + y \cdot \frac{r}{4} < 0 \implies x + y < 0$$
+**Obtuse at $O$:**
+$$
+\vec{OB} \cdot \vec{OC} < 0
+\iff x \cdot \frac{r}{4} + y \cdot \frac{r}{4} < 0
+\iff x + y < 0.
+$$
 
-**Obtuse at $C$:** $\vec{CO} \cdot \vec{CB} < 0$
-$$\left(-\frac{r}{4}\right)\left(x - \frac{r}{4}\right) + \left(-\frac{r}{4}\right)\left(y - \frac{r}{4}\right) < 0 \implies x + y > \frac{r}{2}$$
+**Obtuse at $C$:**
+$$
+\vec{CO} \cdot \vec{CB} < 0
+\iff \left(-\frac{r}{4}\right)\left(x - \frac{r}{4}\right) + \left(-\frac{r}{4}\right)\left(y - \frac{r}{4}\right) < 0
+\iff x + y > \frac{r}{2}.
+$$
 
-**Obtuse at $B$:** $\vec{BO} \cdot \vec{BC} < 0$
-$$(-x)\left(\frac{r}{4} - x\right) + (-y)\left(\frac{r}{4} - y\right) < 0 \implies x^2 + y^2 < \frac{r}{4}(x + y)$$
+**Obtuse at $B$:**
+$$
+\vec{BO} \cdot \vec{BC} < 0
+\iff (-x)\left(\frac{r}{4} - x\right) + (-y)\left(\frac{r}{4} - y\right) < 0
+\iff x^2 + y^2 < \frac{r}{4}(x + y).
+$$
 
-Completing the square:
-$$\left(x - \frac{r}{8}\right)^2 + \left(y - \frac{r}{8}\right)^2 < \frac{r^2}{32}$$
-
-This is a circle centered at $(r/8, r/8)$ with radius $r\sqrt{2}/8$.
+Completing the square gives
+$$
+\left(x - \frac{r}{8}\right)^2 + \left(y - \frac{r}{8}\right)^2 < \frac{r^2}{32},
+$$
+so the $B$-obtuse region is an open disk centered at $(r/8, r/8)$.
 
 ### These Regions Are Disjoint
 
-- Region O requires $x + y < 0$.
-- Region C requires $x + y > r/2$.
-- Region B requires $(x - r/8)^2 + (y - r/8)^2 < r^2/32$, which implies $0 < x + y < r/2$.
+- Region $O$ requires $x + y < 0$.
+- Region $C$ requires $x + y > r/2$.
+- Region $B$ implies $0 < x + y < r/2$.
 
-So the three regions are pairwise disjoint.
+Hence the three obtuse cases are pairwise disjoint.
 
 ### Degenerate Cases
 
-$O$, $B$, $C$ are collinear when $B$ lies on the line $y = x$. These must be excluded from all counts.
+The points $O$, $B$, and $C$ are collinear exactly when $B$ lies on the line $y = x$. These points must be excluded because they do not form a genuine triangle.
 
 ### Region O Count
 
-Lattice points with $|x| + |y| \leq r$ and $x + y < 0$, excluding $x = y$:
-
-By symmetry of the diamond about $x + y = 0$:
-$$|\text{Region O}| = \frac{\text{total} - \text{on } x+y=0}{2} - |\{x = y, x + y < 0\}|$$
-
-The total lattice points in the diamond is $2r^2 + 2r + 1$. Points on $x + y = 0$: $r + 1$. Points with $x + y < 0$: $r(2r+1)/2$. Points with $x = y$ and $x + y < 0$: $r/2$ points.
-
-$$|\text{Region O}| = r(2r+1)/2 - r/2 = r^2$$
+Inside the diamond $|x| + |y| \leq r$, the condition $x + y < 0$ cuts off exactly half of the non-boundary points, and removing the collinear points on $y = x$ leaves
+$$
+|\text{Region } O| = r^2.
+$$
 
 ### Region C Count
 
-By a similar counting argument over $x + y = s$ for $s > r/2$:
-
-$$|\text{Region C}| = \frac{r^2}{2}$$
+A parallel counting argument on the strips $x + y = s$ for $s > r/2$ gives
+$$
+|\text{Region } C| = \frac{r^2}{2}.
+$$
 
 ### Region B Count
 
-Count lattice points $(x, y)$ with $(x - r/8)^2 + (y - r/8)^2 < r^2/32$ and $x \neq y$.
+Write
+$$
+u = x - \frac{r}{8}, \qquad v = y - \frac{r}{8}.
+$$
+Because $r = 10^9$ is divisible by 8, this is an integer translation, and the disk becomes
+$$
+u^2 + v^2 < \frac{r^2}{32} = 2\left(\frac{r}{8}\right)^2.
+$$
 
-Substituting $u = x - r/8$, $v = y - r/8$ (for $r$ divisible by 8):
-$$u^2 + v^2 < \frac{r^2}{32} = 2\left(\frac{r}{8}\right)^2$$
-
-The circle count is computed by iterating over $u$ and counting valid $v$.
-
-Collinear points have $u = v$: $2u^2 < r^2/32$ gives $|u| < r/8$, yielding $r/4 - 1$ points.
+Thus Region $B$ contributes the number of lattice points in that open disk, minus the collinear points where $u = v$. The collinear condition gives
+$$
+2u^2 < \frac{r^2}{32}
+\iff |u| < \frac{r}{8},
+$$
+so the number of excluded points is
+$$
+\frac{r}{4} - 1.
+$$
 
 ### Final Formula
 
-$$N(r) = r^2 + \frac{r^2}{2} + \text{circle\_count} - \left(\frac{r}{4} - 1\right) = \frac{3r^2}{2} - \frac{r}{4} + 1 + \text{circle\_count}$$
+If `circle_count` denotes the number of lattice points satisfying
+$$
+u^2 + v^2 < \frac{r^2}{32},
+$$
+then
+$$
+N(r) = r^2 + \frac{r^2}{2} + \text{circle\_count} - \left(\frac{r}{4} - 1\right)
+= \frac{3r^2}{2} - \frac{r}{4} + 1 + \text{circle\_count}.
+$$
 
-where circle_count is computed in $O(r/8)$ time.
+## Editorial
 
-## Correctness
+The clean split is by the vertex at which the obtuse angle occurs. Dot products turn the conditions at $O$ and $C$ into simple linear inequalities inside the diamond $|x| + |y| \leq r$, and the condition at $B$ turns into an open disk after completing the square.
 
-**Theorem.** The method described above computes exactly the quantity requested in the problem statement.
+Because those three regions are disjoint, the total count is the sum of their contributions. The first two are closed-form counts, while the third becomes a lattice-point count in a translated circle. After subtracting the collinear points on $y = x$, the remaining computation is a single integer sweep over the horizontal offsets of that disk.
 
-*Proof.* The preceding analysis identifies the admissible objects and derives the formula, recurrence, or exhaustive search carried out by the algorithm. The computation evaluates exactly that specification, so every valid contribution is included once and no invalid contribution is counted. Therefore the returned value is the required answer. $\square$
+## Pseudocode
 
-## Complexity
+```text
+Set r = 10^9.
+region_OC = r^2 + r^2 / 2
 
-- **Time**: $O(r/8) \approx O(1.25 \times 10^8)$
-- **Space**: $O(1)$
+s = r / 8
+R2 = 2 * s^2
+circle_count = 0
+
+For each integer u from -floor(sqrt(R2 - 1)) to floor(sqrt(R2 - 1)):
+    rem = R2 - u^2
+    max_v = largest integer v with v^2 < rem
+    Add 2 * max_v + 1 to circle_count
+
+collinear = r / 4 - 1
+region_B = circle_count - collinear
+
+Return region_OC + region_B
+```
+
+## Complexity Analysis
+
+- **Time:** $O(r/8)$ for the disk lattice-point sweep.
+- **Space:** $O(1)$.
 
 ## Answer
 

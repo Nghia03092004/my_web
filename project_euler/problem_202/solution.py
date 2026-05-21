@@ -8,17 +8,17 @@ through vertex C. Count the number of distinct beam paths.
 Approach:
 - Unfold reflections into a triangular tessellation.
 - n = (R + 3) / 2 = 6008819575 is the lattice parameter.
-- Count b in [1, n-1] with b ≡ 2 (mod 3) and gcd(b, n) = 1.
+- Count b in [1, n-1] with b congruent to 2 modulo 3 and gcd(b, n) = 1.
 - Use Mobius inversion over squarefree divisors of n.
 
 n = 6008819575 = 5^2 * 11 * 17 * 23 * 29 * 41 * 47
 """
 
-def solve():
-    R = 12017639147
-    n = (R + 3) // 2  # 6008819575
 
-    # Factor n (extract distinct primes)
+def solve():
+    r = 12017639147
+    n = (r + 3) // 2
+
     primes = []
     tmp = n
     p = 2
@@ -31,38 +31,33 @@ def solve():
     if tmp > 1:
         primes.append(tmp)
 
-    np_ = len(primes)
-    ans = 0
-
-    # Inclusion-exclusion over squarefree divisors (Mobius function)
-    for mask in range(1 << np_):
+    answer = 0
+    for mask in range(1 << len(primes)):
         d = 1
-        bits = bin(mask).count('1')
-        mu = 1 if bits % 2 == 0 else -1
-        for i in range(np_):
+        bits = 0
+        for i, prime in enumerate(primes):
             if mask & (1 << i):
-                d *= primes[i]
+                d *= prime
+                bits += 1
 
-        if n % d != 0:
-            continue
-
+        mu = 1 if bits % 2 == 0 else -1
         nd = n // d
-        d_mod3 = d % 3
 
-        if d_mod3 == 0:
-            cnt = 0  # 3|d means d*k ≡ 0 mod 3, never ≡ 2
+        if d % 3 == 0:
+            count = 0
         else:
-            dinv3 = pow(d, -1, 3)
-            r = (2 * dinv3) % 3
+            inverse_mod_3 = 1 if d % 3 == 1 else 2
+            residue = (2 * inverse_mod_3) % 3
             upper = nd - 1
-            if r == 0:
-                cnt = max(0, (upper - 3) // 3 + 1) if upper >= 3 else 0
+            if residue == 0:
+                count = (upper - 3) // 3 + 1 if upper >= 3 else 0
             else:
-                cnt = max(0, (upper - r) // 3 + 1) if upper >= r else 0
+                count = (upper - residue) // 3 + 1 if upper >= residue else 0
 
-        ans += mu * cnt
+        answer += mu * count
 
-    print(ans)
+    print(answer)
+
 
 if __name__ == "__main__":
     solve()

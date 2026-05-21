@@ -18,9 +18,7 @@ int main() {
     long long s = r / 8; // 125000000, center of circle for region B
 
     // Region O + Region C
-    // Use __int128 to avoid overflow
-    typedef __int128 i128;
-    i128 region_OC = (i128)r * r + (i128)r * r / 2; // 3r^2/2
+    long long region_OC = r * r + r * r / 2; // 3r^2/2
 
     // Region B: circle centered at (s, s), radius^2 = R2 = r^2/32 = 2*s^2
     // Count lattice points (x,y) with (x-s)^2 + (y-s)^2 < R2
@@ -42,7 +40,7 @@ int main() {
 
     long long max_u = isqrt(R2 - 1);
 
-    i128 circle_count = 0;
+    long long circle_count = 0;
     // Use symmetry: u and -u give same count, and swap u,v gives same count
     // circle_count = sum_{u=-max_u}^{max_u} (2*max_v(u) + 1)
     // By symmetry in u: = (2*max_v(0)+1) + 2*sum_{u=1}^{max_u} (2*max_v(u)+1)
@@ -65,28 +63,11 @@ int main() {
 
     // Collinear points in circle: u = v, 2u^2 < R2 = 2s^2, so u^2 < s^2, |u| <= s-1
     // Count = 2*(s-1) + 1 = 2s - 1 = r/4 - 1
-    i128 collinear = r / 4 - 1;
+    long long collinear = r / 4 - 1;
+    long long region_B = circle_count - collinear;
+    long long answer = region_OC + region_B;
 
-    i128 region_B = circle_count - collinear;
-    i128 answer = region_OC + region_B;
-
-    // Print __int128
-    // Convert to string
-    string result;
-    i128 a = answer;
-    if (a == 0) {
-        result = "0";
-    } else {
-        bool neg = false;
-        if (a < 0) { neg = true; a = -a; }
-        while (a > 0) {
-            result += ('0' + (int)(a % 10));
-            a /= 10;
-        }
-        if (neg) result += '-';
-        reverse(result.begin(), result.end());
-    }
-    cout << result << endl;
+    cout << answer << endl;
 
     return 0;
 }

@@ -1,47 +1,55 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-int main(){
-    // S = {1^2, 2^2, ..., 100^2}, find sum of all v such that exactly one
-    // 50-element subset of S sums to v.
+int main() {
+    const int N = 100;
+    const int K = 50;
 
-    const int N = 100, K = 50;
-    // Compute elements
-    vector<int> a(N);
-    for(int i = 0; i < N; i++) a[i] = (i+1)*(i+1);
+    vector<int> squares(N);
+    for (int i = 0; i < N; i++) {
+        squares[i] = (i + 1) * (i + 1);
+    }
 
-    int total = 0;
-    for(int x : a) total += x; // 338350
-    int minsum = 0;
-    for(int i = 0; i < K; i++) minsum += a[i]; // 42925
-    int maxsum = total - minsum; // 295425
+    vector<int> prefix(N + 1, 0);
+    for (int i = 0; i < N; i++) {
+        prefix[i + 1] = prefix[i] + squares[i];
+    }
 
-    // dp[j][s] in {0,1,2} meaning 0/1/2+ subsets of size j summing to s
-    // Use bytes to save memory. We iterate elements and update.
-    // dp dimensions: (K+1) x (maxsum+1)
+    int minSum = prefix[K];
+    int maxSum = prefix[N] - prefix[N - K];
 
-    vector<vector<uint8_t>> dp(K+1, vector<uint8_t>(maxsum+1, 0));
+    // dp[j][s] is 0, 1, or 2 depending on whether there are
+    // zero, one, or at least two j-element subsets with sum s.
+    vector<vector<uint8_t>> dp(K + 1, vector<uint8_t>(maxSum + 1, 0));
     dp[0][0] = 1;
 
-    for(int i = 0; i < N; i++){
-        int ai = a[i];
-        // Iterate j in reverse to avoid reuse
-        for(int j = min(i+1, K); j >= 1; j--){
-            for(int s = maxsum; s >= ai; s--){
-                if(dp[j-1][s-ai]){
-                    int val = dp[j][s] + dp[j-1][s-ai];
-                    if(val > 2) val = 2;
-                    dp[j][s] = val;
+    for (int i = 1; i <= N; i++) {
+        int value = squares[i - 1];
+        int previousTotal = prefix[i - 1];
+
+        for (int size = min(i, K); size >= 1; size--) {
+            int minPrev = prefix[size - 1];
+            int maxPrev = previousTotal - prefix[i - size];
+            auto& curr = dp[size];
+            const auto& prev = dp[size - 1];
+
+            for (int prevSum = maxPrev; prevSum >= minPrev; prevSum--) {
+                if (prev[prevSum]) {
+                    int newSum = prevSum + value;
+                    int total = curr[newSum] + prev[prevSum];
+                    curr[newSum] = static_cast<uint8_t>(min(total, 2));
                 }
             }
         }
     }
 
-    long long ans = 0;
-    for(int s = 0; s <= maxsum; s++){
-        if(dp[K][s] == 1) ans += s;
+    long long answer = 0;
+    for (int sum = minSum; sum <= maxSum; sum++) {
+        if (dp[K][sum] == 1) {
+            answer += sum;
+        }
     }
 
-    cout << ans << endl;
+    cout << answer << '\n';
     return 0;
 }

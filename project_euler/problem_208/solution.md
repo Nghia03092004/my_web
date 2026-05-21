@@ -2,74 +2,97 @@
 
 ## Problem Statement
 
-A robot moves on a plane, taking steps that are each an arc of 1/5 of a circle. At each step, the robot can turn either left (L) or right (R). After 70 steps, how many distinct closed paths return the robot to its starting position with its original orientation?
+A robot moves on a plane, taking steps that are each an arc of one fifth of a circle. At each step, the robot can turn either left or right. After 70 steps, how many distinct closed paths return the robot to its starting position with its original orientation?
 
-## Analysis
+## Mathematical Development
 
-### State Representation
+### Heading States
 
-Each step is an arc of $72° = 2\pi/5$ radians. After each step, the robot's heading changes by $\pm 72°$. We can represent the heading as an element of $\mathbb{Z}/5\mathbb{Z}$:
-- Heading state $d \in \{0, 1, 2, 3, 4\}$
-- Left turn: $d \to (d+1) \bmod 5$
-- Right turn: $d \to (d-1) \bmod 5$
+Each step changes the heading by $\pm 72^\circ$, so the heading can be represented by an element of $\mathbb{Z}/5\mathbb{Z}$:
 
-### Displacement Tracking
+- left turn: $d \mapsto d + 1 \pmod{5}$
+- right turn: $d \mapsto d - 1 \pmod{5}$
 
-Each arc in direction $d$ contributes a displacement vector. For the robot to return to its starting position, we need the sum of all displacement vectors to be zero.
+The walk starts at heading $0$ and must end there as well.
 
-An arc of $72°$ turning left from heading $d$ contributes:
-$$\Delta_L(d) = r(\sin((d+1)\theta) - \sin(d\theta), -\cos((d+1)\theta) + \cos(d\theta))$$
-where $\theta = 72°$ and $r$ is the turning radius.
+### Equal Use of the Five Headings
 
-Similarly for right turns. The key insight is that a left turn from heading $d$ and a right turn from heading $d$ produce different displacements.
+Let $v_d$ be the number of steps taken while the robot is in heading $d$. Writing the arc displacements in complex form and summing them shows that the total displacement is a fixed nonzero scalar multiple of
+$$
+v_0 + v_1 \omega + v_2 \omega^2 + v_3 \omega^3 + v_4 \omega^4,
+$$
+where $\omega = e^{2\pi i / 5}$.
 
-### Reduction to Counting
+The only rational linear relation among $1, \omega, \omega^2, \omega^3, \omega^4$ is
+$$
+1 + \omega + \omega^2 + \omega^3 + \omega^4 = 0,
+$$
+so zero displacement forces
+$$
+v_0 = v_1 = v_2 = v_3 = v_4.
+$$
 
-Let $n_d^L$ and $n_d^R$ be the number of left and right turns made while at heading $d$. For a closed path:
+Since the walk has 70 steps in total, each heading must therefore be used exactly
+$$
+70 / 5 = 14
+$$
+times.
 
-1. **Heading closure**: The net number of left turns minus right turns must be divisible by 5: $\sum_d (n_d^L - n_d^R) \equiv 0 \pmod{5}$.
+### Dynamic Programming State
 
-2. **Displacement closure**: The total displacement in each direction must be zero.
+Once the geometric condition has been reduced to equal heading counts, the remaining task is purely combinatorial. We use memoized dynamic programming on states
+$$
+(d, c_0, c_1, c_2, c_3, c_4),
+$$
+where $d$ is the current heading and $c_i$ is the number of remaining times heading $i$ may still be used.
 
-3. **Heading consistency**: $n_d^L + n_{(d+1) \bmod 5}^R$ accounts for the net flow through heading states. Actually, the number of times the robot is at heading $d$ is determined by the transition counts.
+If all $c_i$ are zero, the walk is valid exactly when the current heading is back to $0$.
 
-### DP Approach
+### Transitions
 
-The state for dynamic programming is $(l_0, l_1, l_2, l_3, l_4)$ where $l_i$ is the number of left arcs taken in heading $i$, along with the current heading. But we also need to track $r_i$ (right arcs in heading $i$).
+From a state with $c_d > 0$, we consume one use of heading $d$ and branch in the two possible directions:
 
-A more efficient approach: the state is $(n_0, n_1, n_2, n_3, n_4, d)$ where $n_i$ is the number of steps taken while at heading $i$ (regardless of left/right), and $d$ is the current heading. But this loses information about left vs. right.
+- turn left and move to heading $(d+1) \bmod 5$
+- turn right and move to heading $(d-1) \bmod 5$
 
-### Better DP
+Every closed walk corresponds to exactly one path through this state graph, and every path that exhausts the counts and returns to heading 0 is a valid closed walk.
 
-Actually, the crucial insight is: let $L_i$ be the total number of left turns from heading $i$, and $R_i$ the total right turns from heading $i$. The total number of times the robot visits heading $i$ is $L_i + R_i$. The heading transitions are:
-- From heading $i$, a left turn goes to heading $(i+1) \bmod 5$
-- From heading $i$, a right turn goes to heading $(i-1) \bmod 5$
+## Editorial
 
-For the heading visits to be consistent, with the robot starting and ending at heading 0:
-$$\text{visits}(i) = L_{(i-1) \bmod 5} + R_{(i+1) \bmod 5} + [i = 0]$$
-(The $+1$ for heading 0 accounts for the initial visit.)
+The geometry looks awkward until it is compressed into a counting constraint. A closed walk must use the five heading classes equally often, so for 70 steps each heading is used exactly 14 times. After that reduction, the shape of the path no longer needs separate coordinate tracking.
 
-No wait, visits$(i)$ = $L_i + R_i$ and the flow in must equal the flow out plus the initial/final adjustments.
+What remains is a finite state search. At any moment we only need to know the current heading and how many uses of each heading are still available. From that state there are at most two legal continuations, corresponding to the next left or right turn, so memoization counts the closed walks without revisiting the same subproblem.
 
-### Simpler DP: Track heading and count of steps in each heading
+## Pseudocode
 
-We use memoized DP with state = (current heading $d$, number of left arcs used for each of the 5 headings). Since we are on a circle of 5 headings and take 70 steps total (14 per heading on average), with each heading getting at most 70 left arcs, this is still large.
+```text
+Define Solve(heading, c0, c1, c2, c3, c4):
+    remaining = c0 + c1 + c2 + c3 + c4
+    If remaining = 0:
+        return 1 if heading = 0, otherwise 0
 
-Better: DP state is (current heading, $c_0, c_1, c_2, c_3$) where $c_i$ is the number of times heading $i$ was visited. We can deduce $c_4 = 70 - c_0 - c_1 - c_2 - c_3$ minus remaining steps. But since each heading must be visited exactly 14 times (for 70 steps = 5 * 14), we can use this constraint.
+    If the state was computed before:
+        return the cached value
 
-### Key Insight: Each Heading Exactly 14 Times
+    Let counts be [c0, c1, c2, c3, c4].
+    If counts[heading] = 0:
+        return 0
 
-For a closed path of 70 steps, each heading direction must be visited exactly 14 times (since the total turning is a multiple of $360°$ and 70/5 = 14). This is because the robot makes a net rotation of $0°$ (returns to original heading), and symmetry requires equal visits. Actually this isn't quite right -- the visits must be 14 each because the total left minus total right must be $\equiv 0 \pmod 5$, and the visits to each heading must be consistent with transitions.
+    Decrease counts[heading] by 1.
 
-With the constraint that each heading is visited exactly 14 times, the DP state becomes $(d, c_0, c_1, c_2, c_3)$ where $c_i$ is the number of remaining visits to heading $i$, and the step count is $70 - (c_0 + c_1 + c_2 + c_3 + c_4)$.
+    total =
+        Solve((heading + 1) mod 5, updated counts) +
+        Solve((heading - 1) mod 5, updated counts)
 
-The DP has at most $5 \times 15^4 \approx 253{,}125$ states.
+    Cache total for the state and return it.
 
-## Correctness
+Return Solve(0, 14, 14, 14, 14, 14)
+```
 
-**Theorem.** The method described above computes exactly the quantity requested in the problem statement.
+## Complexity Analysis
 
-*Proof.* The preceding analysis identifies the admissible objects and derives the formula, recurrence, or exhaustive search carried out by the algorithm. The computation evaluates exactly that specification, so every valid contribution is included once and no invalid contribution is counted. Therefore the returned value is the required answer. $\square$
+- **Time:** $O(\text{number of reachable memoized states})$, with at most two transitions per state.
+- **Space:** $O(\text{number of reachable memoized states})$ for the cache.
 
 ## Answer
 
